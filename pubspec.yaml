@@ -1,0 +1,33 @@
+name: uikit_tab_bar
+description: >-
+  The native iOS 26 tab bar (UITabBarController, Liquid Glass) for Flutter:
+  minimize on scroll, bottom accessory, search tab, prominent tab. Falls back
+  to CupertinoTabBar on older iOS and other platforms.
+version: 0.1.0
+repository: https://github.com/lorenzkromer/uikit_tab_bar
+issue_tracker: https://github.com/lorenzkromer/uikit_tab_bar/issues
+topics:
+  - tab-bar
+  - ios
+  - liquid-glass
+  - cupertino
+  - navigation
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: UikitTabBarPlugin

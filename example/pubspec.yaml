@@ -1,0 +1,25 @@
+name: uikit_tab_bar_example
+description: "Shows every option of the uikit_tab_bar package."
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  uikit_tab_bar:
+    path: ../
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/star.png
+    # Registered natively for the tab titles (UIKitTabBarStyle.titleFontAsset).
+    - assets/fonts/Roboto-Bold.ttf
