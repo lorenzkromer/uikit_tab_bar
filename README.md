@@ -5,6 +5,10 @@ Liquid Glass on iOS 26+, made controllable from Dart. It does not imitate
 the bar. Everywhere else (iOS < 26, Android, web, desktop) the same
 configuration renders a standard `CupertinoTabBar`.
 
+| Glass bar with accessory | Minimized while scrolling | Native search field | Dark |
+| --- | --- | --- | --- |
+| ![Bar](doc/screenshots/bar.png) | ![Minimized](doc/screenshots/minimized.png) | ![Search](doc/screenshots/search.png) | ![Dark](doc/screenshots/dark.png) |
+
 ## Features
 
 | Feature | Native bar | Fallback |

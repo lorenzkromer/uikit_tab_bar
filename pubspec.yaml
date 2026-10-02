@@ -13,6 +13,16 @@ topics:
   - cupertino
   - navigation
 
+screenshots:
+  - description: Native Liquid Glass tab bar with bottom accessory
+    path: doc/screenshots/bar.png
+  - description: Tab bar minimized while scrolling, accessory inline
+    path: doc/screenshots/minimized.png
+  - description: Native search tab, text reported to Dart
+    path: doc/screenshots/search.png
+  - description: Dark appearance following the app theme
+    path: doc/screenshots/dark.png
+
 environment:
   sdk: ^3.9.0
   flutter: ">=3.35.0"
