@@ -127,6 +127,17 @@ class BarStateTests: XCTestCase {
     XCTAssertTrue(StyleSpec(["badgeOffset": [0, 1]]).customizesItems)
   }
 
+  func testBadgeFontKeepsTextColor() {
+    let bar = UITabBar()
+    Appearance.apply(
+      StyleSpec(["badgeFontSize": 9, "badgeFontWeight": 600, "badgeText": NSNumber(value: Int64(0xFFFF_FFFF))]),
+      to: bar)
+    let attrs = bar.standardAppearance.stackedLayoutAppearance.normal.badgeTextAttributes
+    XCTAssertEqual((attrs[.font] as? UIFont)?.pointSize, 9)
+    XCTAssertNotNil(attrs[.foregroundColor])
+    XCTAssertTrue(StyleSpec(["badgeFontWeight": 700]).customizesItems)
+  }
+
   func testColorFromARGB() {
     var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
     UIColor(argb: 0x80FF_0000).getRed(&r, green: &g, blue: &b, alpha: &a)

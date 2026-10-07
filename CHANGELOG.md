@@ -8,7 +8,7 @@
   scrollable, bottom accessory, system search tab, prominent tab (iOS 27+),
   hiding with the system animation.
 * Styling: tint, selected color, title font from app assets, title offset,
-  badge colors and offset, light/dark from the app theme.
+  badge colors, offset and font, light/dark from the app theme.
 * Geometry reporting and `UIKitTabScaffold` for bottom padding.
 * `CupertinoTabBar` fallback on iOS < 26 and all other platforms.
 * Swift Package Manager and CocoaPods; minimum iOS 15.6.

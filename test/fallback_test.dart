@@ -100,6 +100,18 @@ void main() {
     expect(ltrMoved.dy - ltr.dy, closeTo(2, 0.01));
   });
 
+  testWidgets('badge font size and weight', (tester) async {
+    await tester.pumpWidget(_app(UIKitTabBar(
+      tabs: _tabs,
+      selectedId: 'explore',
+      onSelected: (_) {},
+      style: const UIKitTabBarStyle(badgeFontSize: 9, badgeFontWeight: FontWeight.w600),
+    )));
+    final style = tester.widget<Text>(find.text('3')).style!;
+    expect(style.fontSize, 9);
+    expect(style.fontWeight, FontWeight.w600);
+  });
+
   testWidgets('an SF Symbol without fallbackIcon is an error', (tester) async {
     await tester.pumpWidget(_app(UIKitTabBar(
       tabs: const [

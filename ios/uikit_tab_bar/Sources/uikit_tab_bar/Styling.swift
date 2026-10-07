@@ -92,7 +92,14 @@ enum Appearance {
     }
     for state in [item.normal, item.selected, item.disabled, item.focused] {
       if let c = style.badge { state.badgeBackgroundColor = UIColor(argb: c) }
-      if let c = style.badgeText { state.badgeTextAttributes = [.foregroundColor: UIColor(argb: c)] }
+      var badgeText: [NSAttributedString.Key: Any] = [:]
+      if let c = style.badgeText { badgeText[.foregroundColor] = UIColor(argb: c) }
+      if style.badgeFontSize != nil || style.badgeFontWeight != nil {
+        // Measured on iOS 27: the badge resizes with its font.
+        badgeText[.font] = UIFont.systemFont(
+          ofSize: CGFloat(style.badgeFontSize ?? 13), weight: weight(style.badgeFontWeight ?? 400))
+      }
+      if !badgeText.isEmpty { state.badgeTextAttributes = badgeText }
       if let o = style.badgeOffset, o.count == 2 {
         // Measured on iOS 27: positive horizontal moves toward the leading
         // edge (left in LTR, right in RTL), so the Dart value is negated.

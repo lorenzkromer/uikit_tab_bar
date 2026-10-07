@@ -45,6 +45,7 @@ class DemoOptions {
   bool badgeColors = false;
   bool escBadge = false;
   bool badgeOffset = false;
+  bool badgeFont = false;
   int badgeCount = 3;
   bool exploreDisabled = false;
   bool eventsHidden = false;
@@ -138,6 +139,8 @@ class _DemoHomeState extends State<DemoHome> {
         badgeTextColor: options.badgeColors ? Colors.yellowAccent : null,
         // Pulls wide badges (like "ESC" on the last tab) back inside the bar.
         badgeOffset: options.badgeOffset ? const Offset(-8, 0) : null,
+        badgeFontSize: options.badgeFont ? 9 : null,
+        badgeFontWeight: options.badgeFont ? FontWeight.w600 : null,
       );
 
   @override
@@ -349,6 +352,8 @@ class _OptionsPage extends StatelessWidget {
         _switch('Badge „ESC" an Optionen', options.escBadge, (v) => options.escBadge = v),
         _switch('Badges verschieben', options.badgeOffset, (v) => options.badgeOffset = v,
             subtitle: 'badgeOffset: Offset(-8, 0), gilt für alle Tabs'),
+        _switch('Badge-Schrift klein', options.badgeFont, (v) => options.badgeFont = v,
+            subtitle: 'badgeFontSize: 9, badgeFontWeight: w600'),
         ListTile(
           title: const Text('Erscheinungsbild'),
           subtitle: SegmentedButton<ThemeMode>(

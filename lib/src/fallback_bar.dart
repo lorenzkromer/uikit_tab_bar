@@ -94,6 +94,8 @@ class FallbackTabBar extends StatelessWidget {
         color: config.style.badgeColor,
         textColor: config.style.badgeTextColor,
         offset: config.style.badgeOffset ?? Offset.zero,
+        fontSize: config.style.badgeFontSize,
+        fontWeight: config.style.badgeFontWeight,
         child: result,
       );
     }
@@ -127,12 +129,16 @@ class _Badge extends StatelessWidget {
     required this.color,
     required this.textColor,
     required this.offset,
+    required this.fontSize,
+    required this.fontWeight,
     required this.child,
   });
   final String text;
   final Color? color;
   final Color? textColor;
   final Offset offset;
+  final double? fontSize;
+  final FontWeight? fontWeight;
   final Widget child;
 
   @override
@@ -156,7 +162,12 @@ class _Badge extends StatelessWidget {
                 ? null
                 : Text(
                     text,
-                    style: TextStyle(color: textColor ?? CupertinoColors.white, fontSize: 12, height: 1.2),
+                    style: TextStyle(
+                      color: textColor ?? CupertinoColors.white,
+                      fontSize: fontSize ?? 12,
+                      fontWeight: fontWeight,
+                      height: 1.2,
+                    ),
                   ),
           ),
         ),

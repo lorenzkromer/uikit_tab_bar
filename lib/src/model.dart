@@ -319,6 +319,8 @@ class UIKitTabBarStyle {
     this.badgeColor,
     this.badgeTextColor,
     this.badgeOffset,
+    this.badgeFontSize,
+    this.badgeFontWeight,
     this.brightness,
   });
 
@@ -358,6 +360,14 @@ class UIKitTabBarStyle {
   /// no effect under Liquid Glass.
   final Offset? badgeOffset;
 
+  /// Font size of the badge text in points; the badge resizes with it.
+  /// Applies to all badges of the bar.
+  final double? badgeFontSize;
+
+  /// Font weight of the badge text (with [badgeFontSize], or the system's
+  /// default badge size of 13 pt).
+  final FontWeight? badgeFontWeight;
+
   /// Light or dark bar. `null` follows the app (`CupertinoTheme`, then the
   /// platform brightness), not only the system setting.
   final Brightness? brightness;
@@ -374,11 +384,13 @@ class UIKitTabBarStyle {
       other.badgeColor == badgeColor &&
       other.badgeTextColor == badgeTextColor &&
       other.badgeOffset == badgeOffset &&
+      other.badgeFontSize == badgeFontSize &&
+      other.badgeFontWeight == badgeFontWeight &&
       other.brightness == brightness;
 
   @override
   int get hashCode => Object.hash(tintColor, selectedColor, titleFontAsset, titleFontSize,
-      titleFontWeight, titleOffset, badgeColor, badgeTextColor, badgeOffset, brightness);
+      titleFontWeight, titleOffset, badgeColor, badgeTextColor, badgeOffset, badgeFontSize, badgeFontWeight, brightness);
 }
 
 /// Layout of the bar as last reported by UIKit, in the coordinates of the

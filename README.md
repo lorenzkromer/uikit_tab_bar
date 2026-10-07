@@ -21,7 +21,7 @@ configuration renders a standard `CupertinoTabBar`.
 | System search tab with native search field, text to Dart | ✓ | regular tab (bring your own field) |
 | Prominent tab | ✓ iOS 27+ | – |
 | Hide with the system animation | ✓ | ✓ (without animation) |
-| Tint, selected color, title font from app assets, title offset, badge colors and offset | ✓ | tint, badge colors and offset |
+| Tint, selected color, title font from app assets, title offset, badge colors, offset and font | ✓ | tint, badge colors, offset and font |
 | Light/dark following the app theme (not only the system) | ✓ | ✓ |
 | Reported geometry (bottom inset, frames, minimized state) | ✓ | ✓ |
 
@@ -86,6 +86,7 @@ offered in `UIKitTabBarStyle`.
 | Item appearance: title font (size, weight, custom font) | works | `titleFontSize`, `titleFontWeight`, `titleFontAsset` |
 | Item appearance: `titlePositionAdjustment` | works | `titleOffset` |
 | Item appearance: `badgeBackgroundColor`, `badgeTextAttributes` | works | `badgeColor`, `badgeTextColor` |
+| Item appearance: `badgeTextAttributes` font (size, weight) | works; the badge resizes with the text | `badgeFontSize`, `badgeFontWeight` |
 | Item appearance: `badgePositionAdjustment` | works for the whole bar; horizontal points toward the leading edge (the API flips it so `dx` points toward the end) | `badgeOffset` |
 | The same per tab (`UITabBarItem.standardAppearance`) | no effect | – |
 | Item appearance: `badgeTitlePositionAdjustment` | works, but moves the text out of the badge | – |
