@@ -32,7 +32,9 @@ class BarStateTests: XCTestCase {
       extra: [
         "search": ["id": "search", "automaticallyActivatesSearch": true],
         "prominentId": "img", "minimizeBehavior": "onScrollDown", "hidden": true,
-        "style": ["tint": NSNumber(value: Int64(0xFF11_2233)), "titleOffset": [0, -2]],
+        "style": [
+          "tint": NSNumber(value: Int64(0xFF11_2233)), "titleOffset": [0, -2], "badgeOffset": [-8, 2],
+        ],
         "brightness": "dark",
       ])
     XCTAssertEqual(s.tabs.map(\.id), ["home", "img"])
@@ -47,6 +49,7 @@ class BarStateTests: XCTestCase {
     XCTAssertTrue(s.hidden)
     XCTAssertEqual(s.style.tint, 0xFF11_2233)
     XCTAssertEqual(s.style.titleOffset, [0, -2])
+    XCTAssertEqual(s.style.badgeOffset, [-8, 2])
     XCTAssertTrue(s.style.customizesItems)
     XCTAssertEqual(s.brightness, "dark")
   }
@@ -111,6 +114,17 @@ class BarStateTests: XCTestCase {
     XCTAssertTrue(BarDiff.between(base, state(extra: ["rtl": true])).rtl)
     XCTAssertTrue(BarDiff.between(base, state(extra: ["accessory": ["title": "Now"]])).accessory)
     XCTAssertTrue(BarDiff.between(base, state(extra: ["style": ["badge": NSNumber(value: 1)]])).style)
+  }
+
+  func testBadgeOffsetIsAppliedMirroredHorizontally() {
+    // UIKit's horizontal badge adjustment points toward the leading edge
+    // under Liquid Glass; Dart's dx points toward the trailing edge.
+    let bar = UITabBar()
+    Appearance.apply(StyleSpec(["badgeOffset": [-8, 2]]), to: bar)
+    let adjustment = bar.standardAppearance.stackedLayoutAppearance.normal.badgePositionAdjustment
+    XCTAssertEqual(adjustment.horizontal, 8)
+    XCTAssertEqual(adjustment.vertical, 2)
+    XCTAssertTrue(StyleSpec(["badgeOffset": [0, 1]]).customizesItems)
   }
 
   func testColorFromARGB() {

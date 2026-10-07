@@ -43,6 +43,8 @@ class DemoOptions {
   bool font = false;
   bool titleOffset = false;
   bool badgeColors = false;
+  bool escBadge = false;
+  bool badgeOffset = false;
   int badgeCount = 3;
   bool exploreDisabled = false;
   bool eventsHidden = false;
@@ -117,11 +119,12 @@ class _DemoHomeState extends State<DemoHome> {
           hidden: options.eventsHidden,
           subtitle: options.subtitles ? 'Termine' : null,
         ),
-        const UIKitTab(
+        UIKitTab(
           id: 'options',
           label: 'Optionen',
-          icon: UIKitTabIcon.symbol('slider.horizontal.3'),
-          fallbackIcon: Icon(CupertinoIcons.slider_horizontal_3),
+          icon: const UIKitTabIcon.symbol('slider.horizontal.3'),
+          fallbackIcon: const Icon(CupertinoIcons.slider_horizontal_3),
+          badge: options.escBadge ? 'ESC' : null,
         ),
       ];
 
@@ -133,6 +136,8 @@ class _DemoHomeState extends State<DemoHome> {
         titleOffset: options.titleOffset ? const Offset(0, -2) : null,
         badgeColor: options.badgeColors ? Colors.teal : null,
         badgeTextColor: options.badgeColors ? Colors.yellowAccent : null,
+        // Pulls wide badges (like "ESC" on the last tab) back inside the bar.
+        badgeOffset: options.badgeOffset ? const Offset(-8, 0) : null,
       );
 
   @override
@@ -341,6 +346,9 @@ class _OptionsPage extends StatelessWidget {
         _switch('App-Font (Roboto Bold)', options.font, (v) => options.font = v),
         _switch('Titel nach oben', options.titleOffset, (v) => options.titleOffset = v),
         _switch('Badge-Farben', options.badgeColors, (v) => options.badgeColors = v),
+        _switch('Badge „ESC" an Optionen', options.escBadge, (v) => options.escBadge = v),
+        _switch('Badges verschieben', options.badgeOffset, (v) => options.badgeOffset = v,
+            subtitle: 'badgeOffset: Offset(-8, 0), gilt für alle Tabs'),
         ListTile(
           title: const Text('Erscheinungsbild'),
           subtitle: SegmentedButton<ThemeMode>(

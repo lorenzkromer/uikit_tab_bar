@@ -318,6 +318,7 @@ class UIKitTabBarStyle {
     this.titleOffset,
     this.badgeColor,
     this.badgeTextColor,
+    this.badgeOffset,
     this.brightness,
   });
 
@@ -348,6 +349,15 @@ class UIKitTabBarStyle {
   /// Badge text color.
   final Color? badgeTextColor;
 
+  /// Moves all badges, e.g. to keep a wide badge on the last tab inside the
+  /// bar. `dx` follows the text direction: positive moves toward the end
+  /// (right in left-to-right layouts), negative toward the start. Positive
+  /// `dy` moves down.
+  ///
+  /// UIKit applies one offset to every tab of the bar; a per-tab offset has
+  /// no effect under Liquid Glass.
+  final Offset? badgeOffset;
+
   /// Light or dark bar. `null` follows the app (`CupertinoTheme`, then the
   /// platform brightness), not only the system setting.
   final Brightness? brightness;
@@ -363,11 +373,12 @@ class UIKitTabBarStyle {
       other.titleOffset == titleOffset &&
       other.badgeColor == badgeColor &&
       other.badgeTextColor == badgeTextColor &&
+      other.badgeOffset == badgeOffset &&
       other.brightness == brightness;
 
   @override
   int get hashCode => Object.hash(tintColor, selectedColor, titleFontAsset, titleFontSize,
-      titleFontWeight, titleOffset, badgeColor, badgeTextColor, brightness);
+      titleFontWeight, titleOffset, badgeColor, badgeTextColor, badgeOffset, brightness);
 }
 
 /// Layout of the bar as last reported by UIKit, in the coordinates of the

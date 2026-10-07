@@ -74,6 +74,7 @@ void main() {
             titleFontWeight: FontWeight.w600,
             titleOffset: Offset(0, -2),
             badgeColor: Color(0xFF00FF00),
+            badgeOffset: Offset(-8, 2),
           ),
         ),
         _noImages,
@@ -87,6 +88,7 @@ void main() {
         'titleOffset': [0.0, -2.0],
         'badge': 0xFF00FF00,
         'badgeText': null,
+        'badgeOffset': [-8.0, 2.0],
       });
     });
 

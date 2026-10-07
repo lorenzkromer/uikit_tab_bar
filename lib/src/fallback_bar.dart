@@ -93,6 +93,7 @@ class FallbackTabBar extends StatelessWidget {
         text: badge,
         color: config.style.badgeColor,
         textColor: config.style.badgeTextColor,
+        offset: config.style.badgeOffset ?? Offset.zero,
         child: result,
       );
     }
@@ -121,10 +122,17 @@ class _Item {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.text, required this.color, required this.textColor, required this.child});
+  const _Badge({
+    required this.text,
+    required this.color,
+    required this.textColor,
+    required this.offset,
+    required this.child,
+  });
   final String text;
   final Color? color;
   final Color? textColor;
+  final Offset offset;
   final Widget child;
 
   @override
@@ -133,9 +141,9 @@ class _Badge extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         child,
-        Positioned(
-          top: -4,
-          right: -8,
+        PositionedDirectional(
+          top: -4 + offset.dy,
+          end: -8 - offset.dx,
           child: Container(
             constraints: BoxConstraints(minWidth: text.isEmpty ? 10 : 18, minHeight: text.isEmpty ? 10 : 18),
             padding: const EdgeInsets.symmetric(horizontal: 5),

@@ -93,6 +93,11 @@ enum Appearance {
     for state in [item.normal, item.selected, item.disabled, item.focused] {
       if let c = style.badge { state.badgeBackgroundColor = UIColor(argb: c) }
       if let c = style.badgeText { state.badgeTextAttributes = [.foregroundColor: UIColor(argb: c)] }
+      if let o = style.badgeOffset, o.count == 2 {
+        // Measured on iOS 27: positive horizontal moves toward the leading
+        // edge (left in LTR, right in RTL), so the Dart value is negated.
+        state.badgePositionAdjustment = UIOffset(horizontal: -o[0], vertical: o[1])
+      }
     }
     let appearance = UITabBarAppearance()
     appearance.configureWithDefaultBackground()

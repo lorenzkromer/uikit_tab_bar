@@ -90,6 +90,8 @@ struct StyleSpec: Equatable {
   var titleOffset: [Double]?
   var badge: UInt32?
   var badgeText: UInt32?
+  /// Dart semantics: dx toward the trailing edge, dy down.
+  var badgeOffset: [Double]?
 
   init(_ value: Any?) {
     let m = value as? [String: Any] ?? [:]
@@ -104,12 +106,13 @@ struct StyleSpec: Equatable {
     titleOffset = (m["titleOffset"] as? [NSNumber])?.map(\.doubleValue)
     badge = color("badge")
     badgeText = color("badgeText")
+    badgeOffset = (m["badgeOffset"] as? [NSNumber])?.map(\.doubleValue)
   }
 
   /// Whether an item appearance is needed at all (otherwise system default).
   var customizesItems: Bool {
     selected != nil || fontAsset != nil || fontSize != nil || fontWeight != nil
-      || titleOffset != nil || badge != nil || badgeText != nil
+      || titleOffset != nil || badge != nil || badgeText != nil || badgeOffset != nil
   }
 }
 

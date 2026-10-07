@@ -167,6 +167,7 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
       'titleOffset': style.titleOffset == null ? null : [style.titleOffset!.dx, style.titleOffset!.dy],
       'badge': encodeColor(style.badgeColor),
       'badgeText': encodeColor(style.badgeTextColor),
+      'badgeOffset': style.badgeOffset == null ? null : [style.badgeOffset!.dx, style.badgeOffset!.dy],
     },
     'brightness': state.brightness.name,
     'rtl': state.rtl,

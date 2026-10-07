@@ -80,6 +80,26 @@ void main() {
     expect(g.bottomInset, 50, reason: 'CupertinoTabBar height without safe area in tests');
   });
 
+  testWidgets('badgeOffset moves the badge, directionally', (tester) async {
+    Future<Offset> badgeAt(Offset? offset, TextDirection dir) async {
+      await tester.pumpWidget(Directionality(
+        textDirection: dir,
+        child: _app(UIKitTabBar(
+          tabs: _tabs,
+          selectedId: 'explore',
+          onSelected: (_) {},
+          style: UIKitTabBarStyle(badgeOffset: offset),
+        )),
+      ));
+      return tester.getCenter(find.text('3'));
+    }
+
+    final ltr = await badgeAt(null, TextDirection.ltr);
+    final ltrMoved = await badgeAt(const Offset(-8, 2), TextDirection.ltr);
+    expect(ltrMoved.dx - ltr.dx, closeTo(-8, 0.01));
+    expect(ltrMoved.dy - ltr.dy, closeTo(2, 0.01));
+  });
+
   testWidgets('an SF Symbol without fallbackIcon is an error', (tester) async {
     await tester.pumpWidget(_app(UIKitTabBar(
       tabs: const [
