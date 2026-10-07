@@ -173,7 +173,7 @@ class UIKitSearchTab {
   final String? placeholder;
 
   /// Activates the search field (and keyboard) as soon as the tab is
-  /// selected; cancelling returns to the previous tab (iOS 26).
+  /// selected; cancelling returns to the previous tab (iOS 26+).
   final bool automaticallyActivatesSearch;
 
   /// Fallback icon; defaults to a built-in magnifier glyph.
@@ -240,7 +240,7 @@ enum UIKitTabAccessoryEnvironment {
   inline,
 }
 
-/// The bottom accessory above the tab bar (iOS 26, e.g. "now playing").
+/// The bottom accessory above the tab bar (iOS 26+, e.g. "now playing").
 ///
 /// The content is native, described by these fields. It is not shown in
 /// the Cupertino fallback.

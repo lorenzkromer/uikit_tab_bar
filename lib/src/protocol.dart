@@ -62,7 +62,7 @@ class TabBarState {
   /// Optional search tab.
   final UIKitSearchTab? searchTab;
 
-  /// Prominent tab id (iOS 27).
+  /// Prominent tab id (iOS 27+).
   final String? prominentTabId;
 
   /// Minimize behavior.

@@ -110,7 +110,7 @@ offered in `UIKitTabBarStyle`.
   Flutter's position. Behavior was verified against a pure UIKit reference
   app with the same gestures.
 * Dart sends the complete state on every change; Swift diffs it and applies
-  the changes in one batch (`performBatchUpdates` on iOS 27). Hot reload just
+  the changes in one batch (`performBatchUpdates` on iOS 27+). Hot reload just
   works.
 * Non-symbol icons are rendered in Dart at device scale and sent once as
   template images. Fonts from the app's assets are registered natively.

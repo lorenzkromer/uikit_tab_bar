@@ -54,13 +54,13 @@ class UIKitTabBar extends StatefulWidget {
   /// [UIKitSearchTab.automaticallyActivatesSearch] becomes prominent).
   final String? prominentTabId;
 
-  /// Whether the bar minimizes while scrolling (iOS 26).
+  /// Whether the bar minimizes while scrolling (iOS 26+).
   final UIKitTabBarMinimizeBehavior minimizeBehavior;
 
   /// Hides the bar with the system animation.
   final bool hidden;
 
-  /// Optional bottom accessory above the bar (iOS 26).
+  /// Optional bottom accessory above the bar (iOS 26+).
   final UIKitTabAccessory? accessory;
 
   /// Visual options.

@@ -5,7 +5,7 @@
 Pod::Spec.new do |s|
   s.name             = 'uikit_tab_bar'
   s.version          = '0.1.0'
-  s.summary          = 'The native iOS 26 tab bar (UITabBarController, Liquid Glass) for Flutter.'
+  s.summary          = 'The native iOS 26+ tab bar (UITabBarController, Liquid Glass) for Flutter.'
   s.description      = <<-DESC
 Hosts a UITabBarController in a Flutter platform view: minimize on scroll,
 bottom accessory, search tab, prominent tab, styling and geometry reporting.

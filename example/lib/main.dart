@@ -314,7 +314,7 @@ class _OptionsPage extends StatelessWidget {
         ),
         _switch('Bottom Accessory', options.accessory, (v) => options.accessory = v),
         _switch('Events hervorheben', options.prominent, (v) => options.prominent = v,
-            subtitle: 'prominentTabIdentifier, iOS 27'),
+            subtitle: 'prominentTabIdentifier, iOS 27+'),
         _switch('Such-Tab', options.search, (v) => options.search = v),
         _switch('Suche sofort aktivieren', options.autoSearch, (v) => options.autoSearch = v,
             subtitle: 'automaticallyActivatesSearch'),

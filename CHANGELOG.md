@@ -5,7 +5,7 @@
   tabs with SF Symbols, Flutter `IconData` or images, badges, enabled and
   hidden state; controlled selection with `onReselect`.
 * Minimize on scroll (`onScrollDown` / `onScrollUp`) driven by the Flutter
-  scrollable, bottom accessory, system search tab, prominent tab (iOS 27),
+  scrollable, bottom accessory, system search tab, prominent tab (iOS 27+),
   hiding with the system animation.
 * Styling: tint, selected color, title font from app assets, title offset,
   badge colors, light/dark from the app theme.
