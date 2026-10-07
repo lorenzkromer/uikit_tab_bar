@@ -27,6 +27,14 @@ final class HostView: UIView {
   }
 }
 
+// SDK guards: `#available` only checks the OS at runtime; building with an
+// SDK that doesn't declare an API fails at compile time. APIs newer than the
+// iOS 26.0 SDK are therefore also wrapped in `#if compiler(...)`, using the
+// Swift version Apple ships with the first Xcode carrying that SDK (Xcode
+// release notes): Swift 6.2.1 = Xcode 26.1.1 = iOS 26.1 SDK (`UITab.selectedImage`),
+// Swift 6.4 = Xcode 27 = iOS 27 SDK (prominent tab, `performBatchUpdates`).
+// With an older Xcode these features are simply left out.
+
 /// A `UITabBarController` inside a Flutter platform view. Its tab content
 /// controllers are transparent placeholders; the content is Flutter,
 /// rendered behind the platform view.
@@ -147,12 +155,14 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         controller.setTabBarHidden(new.hidden, animated: animated)
       }
       if diff.accessory { applyAccessory(new.accessory, animated: animated) }
-      if #available(iOS 27.0, *), diff.prominent || diff.structure {
-        let id = new.prominentId.flatMap { tabs[$0]?.identifier }
-        if id != controller.prominentTabIdentifier {
-          controller.setProminentTabIdentifier(id, animated: animated)
+      #if compiler(>=6.4)  // iOS 27 SDK, see "SDK guards" at the top of this file
+        if #available(iOS 27.0, *), diff.prominent || diff.structure {
+          let id = new.prominentId.flatMap { tabs[$0]?.identifier }
+          if id != controller.prominentTabIdentifier {
+            controller.setProminentTabIdentifier(id, animated: animated)
+          }
         }
-      }
+      #endif
       // Always reconcile: the user may have selected natively and Dart
       // kept (vetoed) the previous selection.
       if new.rootIds.contains(new.selectedId), let tab = tabs[new.selectedId],
@@ -161,11 +171,15 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         controller.selectedTab = tab
       }
     }
-    if #available(iOS 27.0, *), animated, !diff.isEmpty {
-      controller.performBatchUpdates(work)
-    } else {
+    #if compiler(>=6.4)  // iOS 27 SDK, see "SDK guards" at the top of this file
+      if #available(iOS 27.0, *), animated, !diff.isEmpty {
+        controller.performBatchUpdates(work)
+      } else {
+        work()
+      }
+    #else
       work()
-    }
+    #endif
     updatePanForwarding()
     pokeGeometry()
   }
@@ -223,9 +237,11 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   private func configure(_ tab: UITab, _ spec: TabSpec) {
     tab.title = spec.title
     tab.image = images.image(spec.icon)
-    if #available(iOS 26.1, *) {
-      tab.selectedImage = images.image(spec.selectedIcon)
-    }
+    #if compiler(>=6.2.1)  // iOS 26.1 SDK, see "SDK guards" at the top of this file
+      if #available(iOS 26.1, *) {
+        tab.selectedImage = images.image(spec.selectedIcon)
+      }
+    #endif
     tab.badgeValue = spec.badge
     tab.subtitle = spec.subtitle
     tab.isEnabled = spec.enabled

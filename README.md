@@ -146,3 +146,15 @@ offered in `UIKitTabBarStyle`.
 * Swift Package Manager and CocoaPods.
 * All other platforms: `CupertinoTabBar` (the plugin has no native part
   there).
+
+### Requirements
+
+The native bar needs Xcode 26 (iOS 26 SDK) or later to build. Features that
+use newer APIs are compiled in only with the SDK that declares them; with an
+older Xcode the package still builds and the feature is left out:
+
+| Feature | Needs to build | At runtime |
+| --- | --- | --- |
+| Native bar, minimize, accessory, search tab | Xcode 26 (iOS 26 SDK) | iOS 26+ |
+| Selected tab icon (`UIKitTab.selectedIcon`) | Xcode 26.1.1 (iOS 26.1 SDK) | iOS 26.1+ |
+| Prominent tab, batched animated updates | Xcode 27 (iOS 27 SDK) | iOS 27+ |

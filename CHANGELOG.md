@@ -1,3 +1,11 @@
+## 0.1.1
+
+* Builds with Xcode versions older than 27 (iOS 26.x SDKs) and older than
+  Xcode 26.1.1 (iOS 26.0 SDK). APIs newer than the iOS 26.0 SDK are now also
+  guarded at compile time; without the newer SDK the related features are
+  left out: prominent tab and batched tab updates need Xcode 27 (iOS 27 SDK),
+  the selected tab icon needs Xcode 26.1.1 (iOS 26.1 SDK).
+
 ## 0.1.0
 
 * Initial release.
