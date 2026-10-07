@@ -188,6 +188,7 @@ void main() {
   test('decodeGeometry', () {
     final g = decodeGeometry({
       'bottomInset': 139,
+      'topInset': 112,
       'bar': [0, 117, 420, 83],
       'accessory': <Object?>[],
       'search': [20, 10, 380, 44],
@@ -201,6 +202,7 @@ void main() {
     });
     expect(g.isNative, isTrue);
     expect(g.bottomInset, 139);
+    expect(g.topInset, 112);
     expect(g.barRect, const Rect.fromLTWH(0, 117, 420, 83));
     expect(g.accessoryRect, isNull);
     expect(g.searchFieldRect, const Rect.fromLTWH(20, 10, 380, 44));

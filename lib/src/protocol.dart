@@ -231,6 +231,7 @@ UIKitTabBarGeometry decodeGeometry(Map<Object?, Object?> m) {
   return UIKitTabBarGeometry(
     isNative: true,
     bottomInset: (m['bottomInset'] as num?)?.toDouble() ?? 0,
+    topInset: (m['topInset'] as num?)?.toDouble() ?? 0,
     barRect: _rect(m['bar']),
     accessoryRect: _rect(m['accessory']),
     searchFieldRect: _rect(m['search']),

@@ -126,9 +126,9 @@ offered in `UIKitTabBarStyle`.
   scroll position. A scroll back up during a drag expands natively.
 * **Accessory content** is native, described by its fields. Arbitrary
   Flutter widgets inside it would need a second Flutter engine.
-* **Search with keyboard.** While the native search field is active, the
-  platform view grows behind the keyboard so UIKit can place the field
-  above it.
+* **Search mode.** While the native search field is active, the platform
+  view fills the screen so UIKit shows the field at the top, as natively;
+  `UIKitTabScaffold` pads the content top by `UIKitTabBarGeometry.topInset`.
 * **iPad.** The phone-style bottom bar is shown (compact size class). The
   top tab bar, sidebar, tab groups and drag and drop are not supported.
 * **Overlays.** Flutter content painted above the bar region (dialogs,

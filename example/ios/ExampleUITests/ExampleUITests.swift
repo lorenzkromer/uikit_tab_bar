@@ -102,6 +102,10 @@ final class ExampleUITests: XCTestCase {
     app.typeText("burg")
     sleep(1)
     shot("search")
+    // Like a native UISearchTab: the active field moves to the top, right
+    // below the status bar (measured natively: y = 68 on an iPhone Air).
+    XCTAssertLessThan(field.frame.minY, 120, "active field sits at the top")
+    XCTAssertGreaterThan(field.frame.minY, 40, "below the status bar")
     // The Flutter page renders the hits from the text Dart received.
     XCTAssertTrue(app.staticTexts["Hamburg"].exists)
     XCTAssertFalse(app.staticTexts["Berlin"].exists)

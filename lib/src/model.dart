@@ -378,6 +378,7 @@ class UIKitTabBarGeometry {
   const UIKitTabBarGeometry({
     required this.isNative,
     required this.bottomInset,
+    this.topInset = 0,
     this.barRect,
     this.accessoryRect,
     this.searchFieldRect,
@@ -397,6 +398,11 @@ class UIKitTabBarGeometry {
   /// (bar, accessory and home indicator); UIKit's `contentLayoutGuide`.
   /// Apps use this as bottom padding.
   final double bottomInset;
+
+  /// Height at the top of the screen that content should keep clear of
+  /// while the native search field is active: like in a native app, UIKit
+  /// then shows the field at the top, below the status bar. `0` otherwise.
+  final double topInset;
 
   /// Frame of the tab bar view (full width, incl. home indicator area).
   final Rect? barRect;
@@ -424,6 +430,7 @@ class UIKitTabBarGeometry {
       other is UIKitTabBarGeometry &&
       other.isNative == isNative &&
       other.bottomInset == bottomInset &&
+      other.topInset == topInset &&
       other.barRect == barRect &&
       other.accessoryRect == accessoryRect &&
       other.searchFieldRect == searchFieldRect &&
@@ -433,11 +440,12 @@ class UIKitTabBarGeometry {
       other.accessoryEnvironment == accessoryEnvironment;
 
   @override
-  int get hashCode => Object.hash(isNative, bottomInset, barRect, accessoryRect,
+  int get hashCode => Object.hash(isNative, bottomInset, topInset, barRect, accessoryRect,
       searchFieldRect, Object.hashAll(hitRects), minimized, hidden, accessoryEnvironment);
 
   @override
   String toString() => 'UIKitTabBarGeometry(native: $isNative, bottomInset: $bottomInset, '
+      'topInset: $topInset, '
       'bar: $barRect, accessory: $accessoryRect, minimized: $minimized, hidden: $hidden, '
       'accessory: ${accessoryEnvironment.name})';
 }

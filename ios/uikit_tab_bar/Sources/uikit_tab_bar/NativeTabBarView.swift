@@ -47,6 +47,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   private var lastGeometry: [String: AnyHashable] = [:]
   private var displayLink: CADisplayLink?
   private var pollUntil: CFTimeInterval = 0
+  private var searchActive = false
 
   init(frame: CGRect, channel: FlutterMethodChannel, args: [String: Any]) {
     host = HostView(frame: frame)
@@ -208,6 +209,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       vc.onText = { text in self?.send("searchChanged", ["text": text]) }
       vc.onSubmit = { text in self?.send("searchSubmitted", ["text": text]) }
       vc.onActive = { active in
+        self?.searchActive = active
         self?.send("searchActive", ["active": active])
         self?.pokeGeometry()
       }
@@ -386,6 +388,8 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       "hidden": controller.isTabBarHidden,
       "minimized": minimized,
       "bottomInset": Double(max(0, host.bounds.maxY - guide.maxY)),
+      // Active, the field sits at the top of the (then full-height) host.
+      "topInset": searchActive && !searchRect.isEmpty ? searchRect[1] + searchRect[3] : 0.0,
       "accessoryEnvironment": accessoryView?.environmentName ?? "none",
     ]
     if geometry != lastGeometry {

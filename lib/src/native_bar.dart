@@ -92,24 +92,25 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
   }
 
   TabBarState get _state => TabBarState(
-        tabs: _config.tabs,
-        selectedId: _config.selectedId,
-        searchTab: _config.searchTab,
-        prominentTabId: _config.prominentTabId,
-        minimizeBehavior: _config.minimizeBehavior,
-        hidden: _config.hidden,
-        accessory: _config.accessory,
-        style: _config.style,
-        brightness: _config.style.brightness ??
-            CupertinoTheme.maybeBrightnessOf(context) ??
-            MediaQuery.platformBrightnessOf(context),
-        rtl: Directionality.maybeOf(context) == TextDirection.rtl,
-      );
+    tabs: _config.tabs,
+    selectedId: _config.selectedId,
+    searchTab: _config.searchTab,
+    prominentTabId: _config.prominentTabId,
+    minimizeBehavior: _config.minimizeBehavior,
+    hidden: _config.hidden,
+    accessory: _config.accessory,
+    style: _config.style,
+    brightness:
+        _config.style.brightness ??
+        CupertinoTheme.maybeBrightnessOf(context) ??
+        MediaQuery.platformBrightnessOf(context),
+    rtl: Directionality.maybeOf(context) == TextDirection.rtl,
+  );
 
   Map<String, Object?> _encode() => encodeState(
-        _state,
-        (icon) => IconRenderer.instance.lookup(icon, _scale, onReady: _scheduleUpdate),
-      );
+    _state,
+    (icon) => IconRenderer.instance.lookup(icon, _scale, onReady: _scheduleUpdate),
+  );
 
   /// PNGs for image keys the native side has not received yet.
   Map<String, Uint8List> _takeImages(Map<String, Object?> encoded) {
@@ -155,7 +156,9 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
   }
 
   Future<Object?> _handle(MethodCall call) async {
-    final args = call.arguments is Map ? (call.arguments as Map).cast<Object?, Object?>() : const {};
+    final args = call.arguments is Map
+        ? (call.arguments as Map).cast<Object?, Object?>()
+        : const {};
     switch (call.method) {
       case 'selected':
         final id = args['id'] as String;
@@ -225,23 +228,30 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
 
   @override
   Widget build(BuildContext context) {
-    // While the native search field is active, extend the host behind the
-    // keyboard so UIKit can place the field above it.
-    final keyboard = _searchActive ? MediaQuery.viewInsetsOf(context).bottom : 0.0;
-    return SizedBox(
-      height: kNativeHostHeight + _extraHeight + keyboard,
-      child: NativeHitRegion(
-        rects: _geometry.hitRects,
-        child: UiKitView(
-          viewType: kViewType,
-          creationParams: _creationParams,
-          creationParamsCodec: const StandardMessageCodec(),
-          onPlatformViewCreated: _onCreated,
-          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{
-            Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
-          },
-        ),
-      ),
+    // While the native search field is active, the host fills the
+    // available height: UIKit then places the field at the top below the
+    // status bar, as in a native app, instead of at the top of a strip.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final full = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height;
+        return SizedBox(
+          height: _searchActive ? full : kNativeHostHeight + _extraHeight,
+          child: NativeHitRegion(
+            rects: _geometry.hitRects,
+            child: UiKitView(
+              viewType: kViewType,
+              creationParams: _creationParams,
+              creationParamsCodec: const StandardMessageCodec(),
+              onPlatformViewCreated: _onCreated,
+              gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

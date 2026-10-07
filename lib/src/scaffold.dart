@@ -12,7 +12,8 @@ import 'tab_bar.dart';
 /// * the body extends to the bottom edge (the glass bar shows it through),
 /// * `MediaQuery.padding.bottom` of the body is the bar's reported
 ///   [UIKitTabBarGeometry.bottomInset], so `SafeArea`, `ListView` etc. keep
-///   their content clear of the bar,
+///   their content clear of the bar; while the native search field is
+///   active at the top, `padding.top` covers it ([UIKitTabBarGeometry.topInset]),
 /// * vertical scrolling of the body's primary scrollable is forwarded so
 ///   the native bar can minimize.
 ///
@@ -62,11 +63,17 @@ class _UIKitTabScaffoldState extends State<UIKitTabScaffold> {
                 final inset = geometry == UIKitTabBarGeometry.initial
                     ? estimatedBottomInset(media.padding.bottom)
                     : geometry.bottomInset;
+                final top = geometry.topInset;
                 return MediaQuery(
                   data: media.copyWith(
-                    padding: media.padding.copyWith(bottom: math.max(media.padding.bottom, inset)),
-                    viewPadding:
-                        media.viewPadding.copyWith(bottom: math.max(media.viewPadding.bottom, inset)),
+                    padding: media.padding.copyWith(
+                      top: math.max(media.padding.top, top),
+                      bottom: math.max(media.padding.bottom, inset),
+                    ),
+                    viewPadding: media.viewPadding.copyWith(
+                      top: math.max(media.viewPadding.top, top),
+                      bottom: math.max(media.viewPadding.bottom, inset),
+                    ),
                   ),
                   child: child!,
                 );

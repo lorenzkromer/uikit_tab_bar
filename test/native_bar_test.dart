@@ -288,6 +288,46 @@ void main() {
     expect(native.calls.last.arguments, {'action': 'setText', 'text': 'Text'});
   });
 
+  testWidgets('active search fills the height and pads the content top', (tester) async {
+    tester.view.physicalSize = const Size(420, 912);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final native = FakeNative(tester);
+    late EdgeInsets bodyPadding;
+    await tester.pumpWidget(_app(UIKitTabScaffold(
+      tabBar: UIKitTabBar(
+        tabs: _tabs,
+        selectedId: 'search',
+        onSelected: (_) {},
+        searchTab: const UIKitSearchTab(),
+      ),
+      body: Builder(builder: (context) {
+        bodyPadding = MediaQuery.paddingOf(context);
+        return const SizedBox.expand();
+      }),
+    )));
+    await tester.pump();
+    final host = find.byType(UiKitView);
+    expect(tester.getSize(host).height, 200);
+
+    await native.send('searchActive', {'active': true});
+    expect(tester.getSize(host).height, 912, reason: 'UIKit puts the active field at the top');
+
+    await native.send('geometry', {
+      'bottomInset': 83.0,
+      'topInset': 112.0,
+      'search': [20.0, 68.0, 325.0, 44.0],
+      'hitRects': [
+        [20.0, 68.0, 325.0, 44.0],
+      ],
+    });
+    await tester.pump();
+    expect(bodyPadding.top, 112);
+
+    await native.send('searchActive', {'active': false});
+    expect(tester.getSize(host).height, 200);
+  });
+
   test('isNativeSupported follows the override', () {
     debugUseNativeTabBar = false;
     expect(UIKitTabBar.isNativeSupported, isFalse);
