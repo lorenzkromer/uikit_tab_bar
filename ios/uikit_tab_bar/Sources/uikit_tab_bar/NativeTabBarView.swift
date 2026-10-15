@@ -17,6 +17,12 @@ final class HostView: UIView {
     onLayout?()
   }
 
+  /// Also fires when the vertical bar comes or goes without a resize.
+  override func safeAreaInsetsDidChange() {
+    super.safeAreaInsetsDidChange()
+    onLayout?()
+  }
+
   var nearestViewController: UIViewController? {
     var responder: UIResponder? = superview
     while let r = responder {
@@ -97,9 +103,11 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         parent.addChild(controller)
         controller.didMove(toParent: parent)
       }
+      applyVerticalBarBehavior()
       startDisplayLink()
     } else {
       if controller.parent != nil {
+        VerticalBar.setDisabled(false, for: controller)
         controller.willMove(toParent: nil)
         controller.removeFromParent()
       }
@@ -141,7 +149,12 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       if diff.structure || !diff.changedTabs.isEmpty || diff.search {
         applyTabs(new, diff: diff, animated: animated)
       }
-      if diff.style { Appearance.apply(new.style, to: controller.tabBar) }
+      if diff.style {
+        Appearance.apply(new.style, to: controller.tabBar)
+        // The vertical bar ignores `UITabBar.tintColor` and inherits the
+        // controller view's tint (measured on iOS 27.1).
+        controller.view.tintColor = new.style.tint.map(UIColor.init(argb:))
+      }
       if diff.brightness {
         controller.overrideUserInterfaceStyle = new.brightness == "dark" ? .dark : .light
       }
@@ -155,6 +168,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         controller.setTabBarHidden(new.hidden, animated: animated)
       }
       if diff.accessory { applyAccessory(new.accessory, animated: animated) }
+      if diff.verticalBar { applyVerticalBarBehavior() }
       #if compiler(>=6.4)  // iOS 27 SDK, see "SDK guards" at the top of this file
         if #available(iOS 27.0, *), diff.prominent || diff.structure {
           let id = new.prominentId.flatMap { tabs[$0]?.identifier }
@@ -302,6 +316,12 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     }
   }
 
+  /// Opting out goes to the root of the presentation (see `VerticalBar`).
+  private func applyVerticalBarBehavior() {
+    guard controller.parent != nil else { return }
+    VerticalBar.setDisabled(state?.verticalBar == "disabled", for: controller)
+  }
+
   /// Re-applying the behavior makes UIKit show the full bar again.
   private func expandIfMinimized() {
     guard lastGeometry["minimized"] as? Bool == true, state?.minimizeBehavior == "onScrollDown"
@@ -373,12 +393,21 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     guard host.window != nil, controller.parent != nil, host.bounds.width > 0,
       host.bounds.height > 0, bar.bounds.width > 0
     else { return }
+    // With a vertical bar UIKit lays the tabs out in a column over the full
+    // height of the controller's view. Dart grows the host to the full
+    // screen once it learns the edge; until then the column would be
+    // squeezed into the bottom strip, so the controller stays invisible.
+    let edge = VerticalBar.edge(of: controller.traitCollection)
+    let vertical = edge != .none
+    let screenHeight = controller.parent?.view.bounds.height ?? host.bounds.height
+    let squeezed = vertical && host.bounds.height < screenHeight * 0.9
+    controller.view.alpha = squeezed ? 0 : 1
     var hitRects: [[Double]] = []
     var barRect: [Double] = []
     var glass: [CGRect] = []
-    let barVisible = !controller.isTabBarHidden && !bar.isHidden && bar.alpha > 0.01
+    let barVisible = !controller.isTabBarHidden && !bar.isHidden && bar.alpha > 0.01 && !squeezed
     if barVisible {
-      glass = glassRects(in: bar)
+      glass = vertical ? floatingGlassRects() : glassRects(in: bar)
       hitRects += glass.map(rectList)
       barRect = rectList(bar.convert(bar.bounds, to: host))
     }
@@ -389,12 +418,19 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       hitRects.append(accessoryRect)
     }
     var searchRect: [Double] = []
-    if let field = firstVisible(UISearchBar.self, in: controller.view) {
+    // At the top (active, or in the vertical layout also inactive), the
+    // field shares the navigation bar with its close button.
+    let searchAtTop = searchActive || vertical
+    if !squeezed, let field = firstVisible(UISearchBar.self, in: controller.view) {
       searchRect = rectList(field.convert(field.bounds, to: host))
       hitRects.append(searchRect)
+      if searchAtTop, let nav = searchNavigationBar, nav.window != nil, !nav.isHidden {
+        hitRects.append(rectList(nav.convert(nav.bounds, to: host)))
+      }
     }
     let widest = glass.map(\.width).max() ?? 0
-    let minimized = barVisible && widest > 0 && widest < bar.bounds.width * 0.6
+    // The vertical bar never minimizes.
+    let minimized = !vertical && barVisible && widest > 0 && widest < bar.bounds.width * 0.6
     let guide = controller.contentLayoutGuide.layoutFrame
     let geometry: [String: AnyHashable] = [
       "bar": barRect,
@@ -404,8 +440,11 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       "hidden": controller.isTabBarHidden,
       "minimized": minimized,
       "bottomInset": Double(max(0, host.bounds.maxY - guide.maxY)),
-      // Active, the field sits at the top of the (then full-height) host.
-      "topInset": searchActive && !searchRect.isEmpty ? searchRect[1] + searchRect[3] : 0.0,
+      "leftInset": Double(max(0, guide.minX - host.bounds.minX)),
+      "rightInset": Double(max(0, host.bounds.maxX - guide.maxX)),
+      "verticalEdge": edge.rawValue,
+      // At the top of the (then full-height) host, see `searchAtTop`.
+      "topInset": searchAtTop && !searchRect.isEmpty ? searchRect[1] + searchRect[3] : 0.0,
       "accessoryEnvironment": accessoryView?.environmentName ?? "none",
     ]
     if geometry != lastGeometry {
@@ -431,6 +470,32 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     visit(bar, depth: 0)
     // Before the first glass layout pass, fall back to the bar itself.
     return out.isEmpty ? [bar.convert(bar.bounds, to: host)] : out
+  }
+
+  /// The glass column of the vertical bar. UIKit hosts it in the tab bar
+  /// controller's view, next to the content, not inside `UITabBar`.
+  private func floatingGlassRects() -> [CGRect] {
+    let content = controller.selectedViewController?.view
+    var out: [CGRect] = []
+    func visit(_ v: UIView, depth: Int) {
+      guard !v.isHidden, v.alpha > 0.01, depth < 16 else { return }
+      if let content, content.isDescendant(of: v), v !== controller.view { return }
+      if v is UIVisualEffectView || String(describing: type(of: v)).contains("Platter") {
+        let r = v.convert(v.bounds, to: host)
+        if r.width > 20, r.height > 20 {
+          out.append(r)
+          return
+        }
+      }
+      v.subviews.forEach { visit($0, depth: depth + 1) }
+    }
+    controller.view.subviews.forEach { visit($0, depth: 0) }
+    return out.isEmpty ? [controller.tabBar.convert(controller.tabBar.bounds, to: host)] : out
+  }
+
+  private var searchNavigationBar: UINavigationBar? {
+    guard let id = state?.search?.id, let tab = tabs[id], controller.selectedTab === tab else { return nil }
+    return (tab.viewController as? UINavigationController)?.navigationBar
   }
 
   private func firstVisible<T: UIView>(_ type: T.Type, in v: UIView) -> T? {

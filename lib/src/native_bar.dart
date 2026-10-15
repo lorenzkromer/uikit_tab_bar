@@ -105,6 +105,7 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
         CupertinoTheme.maybeBrightnessOf(context) ??
         MediaQuery.platformBrightnessOf(context),
     rtl: Directionality.maybeOf(context) == TextDirection.rtl,
+    verticalBarBehavior: _config.verticalBarBehavior,
   );
 
   Map<String, Object?> _encode() => encodeState(
@@ -231,13 +232,14 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
     // While the native search field is active, the host fills the
     // available height: UIKit then places the field at the top below the
     // status bar, as in a native app, instead of at the top of a strip.
+    // The same for the vertical bar, a column over the full height.
     return LayoutBuilder(
       builder: (context, constraints) {
         final full = constraints.hasBoundedHeight
             ? constraints.maxHeight
             : MediaQuery.sizeOf(context).height;
         return SizedBox(
-          height: _searchActive ? full : kNativeHostHeight + _extraHeight,
+          height: _searchActive || _geometry.isVertical ? full : kNativeHostHeight + _extraHeight,
           child: NativeHitRegion(
             rects: _geometry.hitRects,
             child: UiKitView(

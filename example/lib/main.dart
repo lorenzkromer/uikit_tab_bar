@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:uikit_tab_bar/uikit_tab_bar.dart';
 
 void main() => runApp(const ExampleApp());
@@ -51,6 +52,27 @@ class DemoOptions {
   bool eventsHidden = false;
   bool subtitles = false;
   bool forceFallback = false;
+  bool verticalBarDisabled = false;
+  DemoOrientation orientation = DemoOrientation.frei;
+}
+
+/// Orientation lock of the demo, to see the vertical bar move between the
+/// edges (iOS 27.1, iPhone Duo).
+enum DemoOrientation {
+  frei([]),
+  hoch([DeviceOrientation.portraitUp]),
+  querLinks([DeviceOrientation.landscapeLeft]),
+  querRechts([DeviceOrientation.landscapeRight]);
+
+  const DemoOrientation(this.orientations);
+  final List<DeviceOrientation> orientations;
+
+  String get label => switch (this) {
+        frei => 'Frei',
+        hoch => 'Hoch',
+        querLinks => 'Quer links',
+        querRechts => 'Quer rechts',
+      };
 }
 
 class DemoHome extends StatefulWidget {
@@ -188,6 +210,8 @@ class _DemoHomeState extends State<DemoHome> {
             )
           : null,
       style: _style,
+      verticalBarBehavior:
+          options.verticalBarDisabled ? UIKitVerticalBarBehavior.disabled : UIKitVerticalBarBehavior.automatic,
       controller: controller,
       onGeometryChanged: (g) => debugPrint('[example] $g'),
     );
@@ -236,7 +260,7 @@ class _ListPage extends StatelessWidget {
     final media = MediaQuery.paddingOf(context);
     return ListView.builder(
       controller: controller,
-      padding: EdgeInsets.fromLTRB(16, media.top + 16, 16, media.bottom + 16),
+      padding: EdgeInsets.fromLTRB(media.left + 16, media.top + 16, media.right + 16, media.bottom + 16),
       itemCount: 41,
       itemBuilder: (context, i) {
         if (i == 0) return Text(title, style: Theme.of(context).textTheme.headlineMedium);
@@ -289,7 +313,7 @@ class _OptionsPage extends StatelessWidget {
     final media = MediaQuery.paddingOf(context);
     return ListView(
       controller: controller,
-      padding: EdgeInsets.only(top: media.top, bottom: media.bottom + 16),
+      padding: EdgeInsets.fromLTRB(media.left, media.top, media.right, media.bottom + 16),
       children: [
         ListTile(
           title: Text('Optionen', style: Theme.of(context).textTheme.headlineMedium),
@@ -302,7 +326,9 @@ class _OptionsPage extends StatelessWidget {
             title: const Text('Geometrie'),
             subtitle: Text(
               'bottomInset ${g.bottomInset.toStringAsFixed(1)} · minimiert ${g.minimized} · '
-              'versteckt ${g.hidden} · Accessory ${g.accessoryEnvironment.name}',
+              'versteckt ${g.hidden} · Accessory ${g.accessoryEnvironment.name} · '
+              'vertikal ${g.verticalBarEdge.name} (links ${g.leftInset.toStringAsFixed(0)}, '
+              'rechts ${g.rightInset.toStringAsFixed(0)})',
             ),
           ),
         ),
@@ -324,6 +350,23 @@ class _OptionsPage extends StatelessWidget {
         _switch('Events hervorheben', options.prominent, (v) => options.prominent = v,
             subtitle: 'prominentTabIdentifier, iOS 27+'),
         _switch('Such-Tab', options.search, (v) => options.search = v),
+        _switch('Vertikale Bar aus', options.verticalBarDisabled, (v) => options.verticalBarDisabled = v,
+            subtitle: 'verticalBarBehavior: disabled, iOS 27.1+ (iPhone Duo)'),
+        ListTile(
+          title: const Text('Ausrichtung'),
+          subtitle: SegmentedButton<DemoOrientation>(
+            showSelectedIcon: false,
+            segments: [
+              for (final o in DemoOrientation.values)
+                ButtonSegment(value: o, label: Text(o.label, style: const TextStyle(fontSize: 11))),
+            ],
+            selected: {options.orientation},
+            onSelectionChanged: (s) {
+              onChanged(() => options.orientation = s.first);
+              SystemChrome.setPreferredOrientations(s.first.orientations);
+            },
+          ),
+        ),
         _switch('Suche sofort aktivieren', options.autoSearch, (v) => options.autoSearch = v,
             subtitle: 'automaticallyActivatesSearch'),
         const _Header('Tabs'),
@@ -424,7 +467,7 @@ class _SearchPage extends StatelessWidget {
       valueListenable: tabBarController.geometry,
       builder: (context, geometry, _) => ListView(
         controller: controller,
-        padding: EdgeInsets.fromLTRB(16, media.top + 16, 16, media.bottom + 16),
+        padding: EdgeInsets.fromLTRB(media.left + 16, media.top + 16, media.right + 16, media.bottom + 16),
         children: [
           Text('Suche', style: Theme.of(context).textTheme.headlineMedium),
           // The native search field lives in the bar; the fallback needs one.

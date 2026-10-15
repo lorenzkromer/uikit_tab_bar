@@ -5,9 +5,9 @@ Liquid Glass on iOS 26+, made controllable from Dart. It does not imitate
 the bar. Everywhere else (iOS < 26, Android, web, desktop) the same
 configuration renders a standard `CupertinoTabBar`.
 
-| Glass bar with accessory | Minimized while scrolling | Native search field | Dark |
-| --- | --- | --- | --- |
-| ![Bar](doc/screenshots/bar.png) | ![Minimized](doc/screenshots/minimized.png) | ![Search](doc/screenshots/search.png) | ![Dark](doc/screenshots/dark.png) |
+| Glass bar with accessory | Minimized while scrolling | Native search field | Dark | Vertical bar (iPhone Duo) |
+| --- | --- | --- | --- | --- |
+| ![Bar](doc/screenshots/bar.png) | ![Minimized](doc/screenshots/minimized.png) | ![Search](doc/screenshots/search.png) | ![Dark](doc/screenshots/dark.png) | ![Vertical](doc/screenshots/vertical.png) |
 
 ## Features
 
@@ -23,6 +23,7 @@ configuration renders a standard `CupertinoTabBar`.
 | Hide with the system animation | ✓ | ✓ (without animation) |
 | Tint, selected color, title font from app assets, title offset, badge colors, offset and font | ✓ | tint, badge colors, offset and font |
 | Light/dark following the app theme (not only the system) | ✓ | ✓ |
+| Vertical bar at the leading or trailing edge (iPhone Duo), opt-out | ✓ iOS 27.1+ | – (always at the bottom) |
 | Reported geometry (bottom inset, frames, minimized state) | ✓ | ✓ |
 
 ## Usage
@@ -66,6 +67,11 @@ UIKitTabScaffold(
   `UIKitTabBarScrollListener`.
 * Read `UIKitTabBarController.geometry` (or `onGeometryChanged`) for the
   bar's height, frames and minimized state.
+* With the vertical bar (below), `UIKitTabScaffold` sets
+  `MediaQuery.padding.left` or `right` to the column's width. Keep content
+  clear of it the same way as of a landscape safe area, e.g. with
+  `SafeArea` or by adding `MediaQuery.paddingOf(context).right` to list
+  paddings.
 * Put `UIKitTabScaffold` outside any widget that resizes for the keyboard
   (or set `resizeToAvoidBottomInset: false` there), so the bar stays at the
   bottom edge like a native one.
@@ -74,6 +80,32 @@ UIKitTabScaffold(
 
 `example/` shows every option, switchable at runtime.
 
+## Vertical bar (iOS 27.1, iPhone Duo)
+
+On hardware with a vertical bar, UIKit moves the tab bar into a column at
+the trailing edge in portrait, and at the left or right edge in landscape
+depending on the rotation. The status bar moves into the column too. The
+native bar follows this automatically, measured against a pure UIKit
+reference app on the iPhone Duo simulator:
+
+| | Bottom bar | Vertical bar |
+| --- | --- | --- |
+| Tabs | glass bar with titles | glass column, icons only |
+| Content insets (`UIKitTabBarGeometry`) | `bottomInset` | `leftInset` / `rightInset` (84 pt incl. the status bar), `bottomInset` for accessory and home indicator |
+| Accessory | above the bar | at the bottom of the content |
+| Search field | in the bar, at the top while active | at the top |
+| Minimize on scroll | ✓ | – (UIKit never minimizes the column) |
+| Hide | ✓ | ✓ (the column's width stays reserved, as natively) |
+| Tint, selected color, badge colors, offset and font, dark | ✓ | ✓ |
+
+`UIKitTabBarGeometry.verticalBarEdge` tells where the column is
+(`none`, `leading`, `trailing`). To keep the bottom bar, set
+`verticalBarBehavior: UIKitVerticalBarBehavior.disabled`. Apple recommends
+this only for screens that are better served by horizontal bars, as a
+stable choice. It applies to the whole window (or presentation), because
+UIKit resolves it from the root view controller: the package sets it on
+the root of the Flutter view controller's hierarchy.
+
 ## What works under Liquid Glass
 
 Measured on iOS 27 (iPhone Air simulator). Only what takes effect is
@@ -81,7 +113,7 @@ offered in `UIKitTabBarStyle`.
 
 | UIKit property | Under Liquid Glass | In the API |
 | --- | --- | --- |
-| `UITabBar.tintColor` | works (selected tab) | `tintColor` |
+| `UITabBar.tintColor` | works (selected tab); the vertical bar uses the tab bar controller's view tint instead, which is set too | `tintColor` |
 | Item appearance, selected: `iconColor`, title color | works | `selectedColor` |
 | Item appearance: title font (size, weight, custom font) | works | `titleFontSize`, `titleFontWeight`, `titleFontAsset` |
 | Item appearance: `titlePositionAdjustment` | works | `titleOffset` |
@@ -101,7 +133,8 @@ offered in `UIKitTabBarStyle`.
 ## How it works
 
 * A `UITabBarController` is a child view controller inside a platform view
-  that covers the bottom 200 pt of the screen. Its tab content controllers
+  that covers the bottom 200 pt of the screen (the full height while the
+  vertical bar is shown or the search field is active). Its tab content controllers
   are transparent placeholders; the content is Flutter, behind them.
 * UIKit reports the frames of the glass pills, accessory and search field
   after every layout change and during animations. A render object lets
@@ -133,6 +166,10 @@ offered in `UIKitTabBarStyle`.
 * **Search mode.** While the native search field is active, the platform
   view fills the screen so UIKit shows the field at the top, as natively;
   `UIKitTabScaffold` pads the content top by `UIKitTabBarGeometry.topInset`.
+* **Vertical bar.** Verified on the iPhone Duo simulator (iOS 27.1) in
+  portrait and both landscape orientations. The simulator of Xcode 27.1
+  offers no hinge control, so the unfolded state was not verified; all
+  positions come from UIKit, nothing assumes a screen size.
 * **iPad.** The phone-style bottom bar is shown (compact size class). The
   top tab bar, sidebar, tab groups and drag and drop are not supported.
 * **Overlays.** Flutter content painted above the bar region (dialogs,
@@ -158,3 +195,4 @@ older Xcode the package still builds and the feature is left out:
 | Native bar, minimize, accessory, search tab | Xcode 26 (iOS 26 SDK) | iOS 26+ |
 | Selected tab icon (`UIKitTab.selectedIcon`) | Xcode 26.1.1 (iOS 26.1 SDK) | iOS 26.1+ |
 | Prominent tab, batched animated updates | Xcode 27 (iOS 27 SDK) | iOS 27+ |
+| Vertical bar, `verticalBarBehavior` | any of the above (used dynamically) | iOS 27.1+ |

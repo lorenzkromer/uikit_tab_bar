@@ -3,7 +3,7 @@ description: >-
   Native iOS 26+ tab bar (UITabBarController, Liquid Glass) for Flutter with
   minimize on scroll, accessory and search tab; CupertinoTabBar fallback
   elsewhere.
-version: 0.1.1
+version: 0.2.0
 repository: https://github.com/lorenzkromer/uikit_tab_bar
 issue_tracker: https://github.com/lorenzkromer/uikit_tab_bar/issues
 topics:
@@ -22,6 +22,8 @@ screenshots:
     path: doc/screenshots/search.png
   - description: Dark appearance following the app theme
     path: doc/screenshots/dark.png
+  - description: Vertical bar on the iPhone Duo (iOS 27.1)
+    path: doc/screenshots/vertical.png
 
 environment:
   sdk: ^3.9.0
