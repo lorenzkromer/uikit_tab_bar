@@ -6,6 +6,13 @@ import UIKit
 final class HostView: UIView {
   var onWindow: ((UIWindow?) -> Void)?
   var onLayout: (() -> Void)?
+  var onTouch: (() -> Void)?
+
+  // A tap on the minimized bar expands it inside UIKit, without a callback.
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    if event?.type == .touches { onTouch?() }
+    return super.hitTest(point, with: event)
+  }
 
   override func didMoveToWindow() {
     super.didMoveToWindow()
@@ -67,6 +74,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     proxy.onReachedTop = { [weak self] in self?.expandIfMinimized() }
     host.onWindow = { [weak self] window in self?.windowChanged(window) }
     host.onLayout = { [weak self] in self?.pokeGeometry() }
+    host.onTouch = { [weak self] in self?.pokeGeometry() }
     channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call, result: result)
     }
@@ -116,6 +124,8 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       if let id = args["tabId"] as? String, id == dartId(controller.selectedTab) {
         func d(_ k: String) -> Double { (args[k] as? NSNumber)?.doubleValue ?? 0 }
         proxy.mirror(pixels: d("pixels"), min: d("min"), max: d("max"))
+        // Scrolling can minimize or expand the bar, again without a callback.
+        pokeGeometry()
       }
       result(nil)
     case "search":

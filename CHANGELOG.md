@@ -1,3 +1,10 @@
+## Unreleased
+
+* Report geometry after a touch on the bar and while the content scrolls.
+  Minimizing on scroll and expanding on tap animate without a callback, so
+  `UIKitTabBarGeometry.minimized` stayed `false` and the hit region kept the
+  frames of the expanded bar until another trigger measured again.
+
 ## 0.1.0
 
 * Initial release.
