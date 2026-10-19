@@ -16,9 +16,6 @@
   iOS 27.1 or later.
 * `UIKitTabBarStyle.tintColor` is also applied to the tab bar controller's
   view (the vertical bar ignores `UITabBar.tintColor`).
-
-## 0.1.1
-
 * Builds with Xcode versions older than 27 (iOS 26.x SDKs) and older than
   Xcode 26.1.1 (iOS 26.0 SDK). APIs newer than the iOS 26.0 SDK are now also
   guarded at compile time; without the newer SDK the related features are
