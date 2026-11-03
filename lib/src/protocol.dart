@@ -51,6 +51,7 @@ class TabBarState {
     this.style = const UIKitTabBarStyle(),
     this.brightness = Brightness.light,
     this.rtl = false,
+    this.verticalBarBehavior = UIKitVerticalBarBehavior.automatic,
   });
 
   /// Regular tabs.
@@ -82,6 +83,9 @@ class TabBarState {
 
   /// Right-to-left layout.
   final bool rtl;
+
+  /// Whether the vertical bar may be used (iOS 27.1+).
+  final UIKitVerticalBarBehavior verticalBarBehavior;
 
   /// All icons that need rendering before they can be shown natively.
   Iterable<UIKitTabIcon> get imageIcons sync* {
@@ -173,6 +177,7 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
     },
     'brightness': state.brightness.name,
     'rtl': state.rtl,
+    'verticalBar': state.verticalBarBehavior.name,
   };
 }
 
@@ -235,6 +240,12 @@ UIKitTabBarGeometry decodeGeometry(Map<Object?, Object?> m) {
     isNative: true,
     bottomInset: (m['bottomInset'] as num?)?.toDouble() ?? 0,
     topInset: (m['topInset'] as num?)?.toDouble() ?? 0,
+    leftInset: (m['leftInset'] as num?)?.toDouble() ?? 0,
+    rightInset: (m['rightInset'] as num?)?.toDouble() ?? 0,
+    verticalBarEdge: UIKitVerticalBarEdge.values.firstWhere(
+      (e) => e.name == m['verticalEdge'],
+      orElse: () => UIKitVerticalBarEdge.none,
+    ),
     barRect: _rect(m['bar']),
     accessoryRect: _rect(m['accessory']),
     searchFieldRect: _rect(m['search']),

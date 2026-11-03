@@ -301,6 +301,34 @@ enum UIKitTabBarMinimizeBehavior {
   onScrollUp,
 }
 
+/// Whether the system may show the vertical bar (iOS 27.1+).
+///
+/// On hardware with a vertical bar (iPhone Duo), UIKit moves the tab bar
+/// into a column at the leading or trailing edge of the screen, together
+/// with the status bar. Apple's guidance: disable it only for screens that
+/// are better served by horizontal bars, and treat it as a stable choice.
+enum UIKitVerticalBarBehavior {
+  /// The system decides (vertical on supporting hardware).
+  automatic,
+
+  /// The bar stays at the bottom and the status bar at the top. Applies to
+  /// the whole window (or presentation) the bar is shown in.
+  disabled,
+}
+
+/// Where the vertical bar is shown (`UIVerticalBarEdge`, iOS 27.1+).
+enum UIKitVerticalBarEdge {
+  /// No vertical bar: the bar sits at the bottom.
+  none,
+
+  /// At the leading edge (left in left-to-right layouts and in the usual
+  /// orientations; UIKit decides per device orientation).
+  leading,
+
+  /// At the trailing edge.
+  trailing,
+}
+
 /// Visual options of the native bar.
 ///
 /// Only properties that measurably take effect under Liquid Glass are
@@ -402,6 +430,9 @@ class UIKitTabBarGeometry {
     required this.isNative,
     required this.bottomInset,
     this.topInset = 0,
+    this.leftInset = 0,
+    this.rightInset = 0,
+    this.verticalBarEdge = UIKitVerticalBarEdge.none,
     this.barRect,
     this.accessoryRect,
     this.searchFieldRect,
@@ -427,7 +458,29 @@ class UIKitTabBarGeometry {
   /// then shows the field at the top, below the status bar. `0` otherwise.
   final double topInset;
 
-  /// Frame of the tab bar view (full width, incl. home indicator area).
+  /// Width at the left edge of the screen that content should keep clear
+  /// of: the vertical bar column (with the status bar) when it sits on the
+  /// left, otherwise the safe area. Physical, not text direction.
+  final double leftInset;
+
+  /// Width at the right edge of the screen that content should keep clear
+  /// of, like [leftInset].
+  final double rightInset;
+
+  /// Where the vertical bar is shown (iOS 27.1+, e.g. iPhone Duo);
+  /// [UIKitVerticalBarEdge.none] for the regular bottom bar.
+  final UIKitVerticalBarEdge verticalBarEdge;
+
+  /// Whether the bar is shown as a vertical column instead of at the
+  /// bottom.
+  bool get isVertical => verticalBarEdge != UIKitVerticalBarEdge.none;
+
+  /// Insets content should keep clear of on all four sides.
+  EdgeInsets get insets =>
+      EdgeInsets.fromLTRB(leftInset, topInset, rightInset, bottomInset);
+
+  /// Frame of the tab bar view (full width, incl. home indicator area; with
+  /// a vertical bar, the full-height column).
   final Rect? barRect;
 
   /// Frame of the accessory, if shown.
@@ -454,6 +507,9 @@ class UIKitTabBarGeometry {
       other.isNative == isNative &&
       other.bottomInset == bottomInset &&
       other.topInset == topInset &&
+      other.leftInset == leftInset &&
+      other.rightInset == rightInset &&
+      other.verticalBarEdge == verticalBarEdge &&
       other.barRect == barRect &&
       other.accessoryRect == accessoryRect &&
       other.searchFieldRect == searchFieldRect &&
@@ -463,12 +519,14 @@ class UIKitTabBarGeometry {
       other.accessoryEnvironment == accessoryEnvironment;
 
   @override
-  int get hashCode => Object.hash(isNative, bottomInset, topInset, barRect, accessoryRect,
-      searchFieldRect, Object.hashAll(hitRects), minimized, hidden, accessoryEnvironment);
+  int get hashCode => Object.hash(isNative, bottomInset, topInset, leftInset, rightInset,
+      verticalBarEdge, barRect, accessoryRect, searchFieldRect, Object.hashAll(hitRects), minimized,
+      hidden, accessoryEnvironment);
 
   @override
   String toString() => 'UIKitTabBarGeometry(native: $isNative, bottomInset: $bottomInset, '
-      'topInset: $topInset, '
+      'topInset: $topInset, leftInset: $leftInset, rightInset: $rightInset, '
+      'verticalBarEdge: ${verticalBarEdge.name}, '
       'bar: $barRect, accessory: $accessoryRect, minimized: $minimized, hidden: $hidden, '
       'accessory: ${accessoryEnvironment.name})';
 }

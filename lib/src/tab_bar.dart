@@ -30,6 +30,7 @@ class UIKitTabBar extends StatefulWidget {
     this.hidden = false,
     this.accessory,
     this.style = const UIKitTabBarStyle(),
+    this.verticalBarBehavior = UIKitVerticalBarBehavior.automatic,
     this.controller,
     this.onGeometryChanged,
   });
@@ -65,6 +66,11 @@ class UIKitTabBar extends StatefulWidget {
 
   /// Visual options.
   final UIKitTabBarStyle style;
+
+  /// Whether the system may show the bar as a vertical column (iOS 27.1+,
+  /// e.g. iPhone Duo). [UIKitTabBarGeometry.verticalBarEdge] reports where
+  /// it is. The fallback bar always sits at the bottom.
+  final UIKitVerticalBarBehavior verticalBarBehavior;
 
   /// Connects the bar with the content; provided by [UIKitTabScaffold].
   final UIKitTabBarController? controller;

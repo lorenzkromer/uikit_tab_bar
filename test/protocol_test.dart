@@ -59,6 +59,19 @@ void main() {
       expect(encoded['brightness'], 'dark');
       expect(encoded['rtl'], true);
       expect(encoded['accessory'], isNull);
+      expect(encoded['verticalBar'], 'automatic');
+    });
+
+    test('encodes the vertical bar behavior', () {
+      final encoded = encodeState(
+        const TabBarState(
+          tabs: [_home],
+          selectedId: 'home',
+          verticalBarBehavior: UIKitVerticalBarBehavior.disabled,
+        ),
+        _noImages,
+      );
+      expect(encoded['verticalBar'], 'disabled');
     });
 
     test('encodes style colors as ARGB and fonts', () {
@@ -217,5 +230,22 @@ void main() {
     expect(g.accessoryEnvironment, UIKitTabAccessoryEnvironment.inline);
     expect(decodeGeometry({'accessoryEnvironment': 'bogus'}).accessoryEnvironment,
         UIKitTabAccessoryEnvironment.none);
+    expect(g.isVertical, isFalse);
+    expect(g.leftInset, 0);
+  });
+
+  test('decodeGeometry: vertical bar', () {
+    final g = decodeGeometry({
+      'bottomInset': 72,
+      'leftInset': 0,
+      'rightInset': 84,
+      'verticalEdge': 'trailing',
+      'bar': [397, 0, 69, 678],
+    });
+    expect(g.verticalBarEdge, UIKitVerticalBarEdge.trailing);
+    expect(g.isVertical, isTrue);
+    expect(g.insets, const EdgeInsets.fromLTRB(0, 0, 84, 72));
+    expect(decodeGeometry({'verticalEdge': 'leading', 'leftInset': 84}).leftInset, 84);
+    expect(decodeGeometry({'verticalEdge': 'bogus'}).verticalBarEdge, UIKitVerticalBarEdge.none);
   });
 }

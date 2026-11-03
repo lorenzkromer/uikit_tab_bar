@@ -14,6 +14,10 @@ import 'tab_bar.dart';
 ///   [UIKitTabBarGeometry.bottomInset], so `SafeArea`, `ListView` etc. keep
 ///   their content clear of the bar; while the native search field is
 ///   active at the top, `padding.top` covers it ([UIKitTabBarGeometry.topInset]),
+/// * with a vertical bar (iOS 27.1+, e.g. iPhone Duo), `padding.left` or
+///   `padding.right` covers its column ([UIKitTabBarGeometry.leftInset],
+///   [UIKitTabBarGeometry.rightInset]); wrap the content in a `SafeArea`
+///   (or pad horizontally) to keep it clear,
 /// * vertical scrolling of the body's primary scrollable is forwarded so
 ///   the native bar can minimize.
 ///
@@ -64,15 +68,21 @@ class _UIKitTabScaffoldState extends State<UIKitTabScaffold> {
                     ? estimatedBottomInset(media.padding.bottom)
                     : geometry.bottomInset;
                 final top = geometry.topInset;
+                final left = geometry.leftInset;
+                final right = geometry.rightInset;
                 return MediaQuery(
                   data: media.copyWith(
                     padding: media.padding.copyWith(
                       top: math.max(media.padding.top, top),
                       bottom: math.max(media.padding.bottom, inset),
+                      left: math.max(media.padding.left, left),
+                      right: math.max(media.padding.right, right),
                     ),
                     viewPadding: media.viewPadding.copyWith(
                       top: math.max(media.viewPadding.top, top),
                       bottom: math.max(media.viewPadding.bottom, inset),
+                      left: math.max(media.viewPadding.left, left),
+                      right: math.max(media.viewPadding.right, right),
                     ),
                   ),
                   child: child!,

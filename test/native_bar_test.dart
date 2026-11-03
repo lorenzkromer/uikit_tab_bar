@@ -328,6 +328,59 @@ void main() {
     expect(tester.getSize(host).height, 200);
   });
 
+  testWidgets('vertical bar: full-height host, side padding, column hit testing', (tester) async {
+    tester.view.physicalSize = const Size(466, 678);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final native = FakeNative(tester);
+    late EdgeInsets bodyPadding;
+    var bodyTapped = 0;
+    await tester.pumpWidget(MediaQuery(
+      data: const MediaQueryData(size: Size(466, 678), padding: EdgeInsets.only(bottom: 34, right: 84)),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: UIKitTabScaffold(
+          tabBar: UIKitTabBar(
+            tabs: _tabs,
+            selectedId: 'home',
+            onSelected: (_) {},
+            verticalBarBehavior: UIKitVerticalBarBehavior.automatic,
+          ),
+          body: Builder(builder: (context) {
+            bodyPadding = MediaQuery.paddingOf(context);
+            return GestureDetector(onTap: () => bodyTapped++, behavior: HitTestBehavior.opaque);
+          }),
+        ),
+      ),
+    ));
+    await tester.pump();
+    expect(native.creationParams!['state']['verticalBar'], 'automatic');
+    final host = find.byType(UiKitView);
+    expect(tester.getSize(host).height, 200);
+
+    await native.send('geometry', {
+      'bottomInset': 72.0,
+      'rightInset': 84.0,
+      'verticalEdge': 'trailing',
+      'bar': [397.0, 0.0, 69.0, 678.0],
+      'hitRects': [
+        [394.0, 392.0, 48.0, 262.0],
+      ],
+    });
+    await tester.pump();
+    expect(tester.getSize(host).height, 678, reason: 'the column spans the full height');
+    expect(bodyPadding, const EdgeInsets.only(right: 84, bottom: 72));
+
+    await tester.tapAt(const Offset(200, 300));
+    expect(bodyTapped, 1, reason: 'content next to the column stays interactive');
+    await tester.tapAt(const Offset(418, 500));
+    expect(bodyTapped, 1, reason: 'the column takes its touches');
+
+    await native.send('geometry', {'bottomInset': 83.0, 'verticalEdge': 'none'});
+    await tester.pump();
+    expect(tester.getSize(host).height, 200, reason: 'back to the bottom strip');
+  });
+
   test('isNativeSupported follows the override', () {
     debugUseNativeTabBar = false;
     expect(UIKitTabBar.isNativeSupported, isFalse);

@@ -114,6 +114,9 @@ class BarStateTests: XCTestCase {
     XCTAssertTrue(BarDiff.between(base, state(extra: ["rtl": true])).rtl)
     XCTAssertTrue(BarDiff.between(base, state(extra: ["accessory": ["title": "Now"]])).accessory)
     XCTAssertTrue(BarDiff.between(base, state(extra: ["style": ["badge": NSNumber(value: 1)]])).style)
+    XCTAssertEqual(base.verticalBar, "automatic")
+    XCTAssertTrue(BarDiff.between(base, state(extra: ["verticalBar": "disabled"])).verticalBar)
+    XCTAssertTrue(BarDiff.between(nil, base).verticalBar)
   }
 
   func testBadgeOffsetIsAppliedMirroredHorizontally() {
@@ -136,6 +139,33 @@ class BarStateTests: XCTestCase {
     XCTAssertEqual((attrs[.font] as? UIFont)?.pointSize, 9)
     XCTAssertNotNil(attrs[.foregroundColor])
     XCTAssertTrue(StyleSpec(["badgeFontWeight": 700]).customizesItems)
+  }
+
+  func testVerticalBarEdgeWithoutAVerticalBar() {
+    XCTAssertEqual(VerticalBar.edge(of: UITraitCollection()), .none)
+  }
+
+  func testVerticalBarOptOutIsPerInstance() throws {
+    try XCTSkipUnless(VerticalBar.isAvailable, "iOS 27.1+")
+    final class Root: UIViewController {}
+    let root = Root(), other = Root(), child = UIViewController()
+    root.addChild(child)
+    // Called like UIKit does (KVC would cache the getter from before the
+    // override was installed).
+    func behavior(_ vc: UIViewController) -> Int {
+      typealias Getter = @convention(c) (AnyObject, Selector) -> Int
+      let selector = NSSelectorFromString("preferredVerticalBarBehavior")
+      let imp = class_getMethodImplementation(type(of: vc), selector)!
+      return unsafeBitCast(imp, to: Getter.self)(vc, selector)
+    }
+    XCTAssertEqual(behavior(root), 0)
+    // Disabling through the child goes to the root of its hierarchy.
+    VerticalBar.setDisabled(true, for: child)
+    XCTAssertEqual(behavior(root), 1)
+    XCTAssertEqual(behavior(other), 0, "other instances keep the default")
+    XCTAssertNil(root.perform(NSSelectorFromString("childViewControllerForPreferredVerticalBarBehavior")))
+    VerticalBar.setDisabled(false, for: child)
+    XCTAssertEqual(behavior(root), 0)
   }
 
   func testColorFromARGB() {

@@ -132,6 +132,8 @@ struct BarState: Equatable {
   var style: StyleSpec
   var brightness: String
   var rtl: Bool
+  /// "automatic" or "disabled" (iOS 27.1 vertical bar).
+  var verticalBar: String
 
   init(_ m: [String: Any]) {
     tabs = (m["tabs"] as? [[String: Any]] ?? []).map(TabSpec.init)
@@ -144,6 +146,7 @@ struct BarState: Equatable {
     style = StyleSpec(m["style"])
     brightness = m["brightness"] as? String ?? "light"
     rtl = m["rtl"] as? Bool ?? false
+    verticalBar = m["verticalBar"] as? String ?? "automatic"
   }
 
   /// Visible root tab ids in display order, search tab last. Hidden tabs
@@ -165,6 +168,7 @@ struct BarDiff: Equatable {
   var style = false
   var brightness = false
   var rtl = false
+  var verticalBar = false
 
   var isEmpty: Bool { self == BarDiff() }
 
@@ -172,7 +176,7 @@ struct BarDiff: Equatable {
     guard let old else {
       var all = BarDiff(
         structure: true, search: true, prominent: true, minimize: true, hidden: true,
-        accessory: true, style: true, brightness: true, rtl: true)
+        accessory: true, style: true, brightness: true, rtl: true, verticalBar: true)
       all.changedTabs = Set(new.tabs.map(\.id))
       return all
     }
@@ -188,6 +192,7 @@ struct BarDiff: Equatable {
     d.style = old.style != new.style
     d.brightness = old.brightness != new.brightness
     d.rtl = old.rtl != new.rtl
+    d.verticalBar = old.verticalBar != new.verticalBar
     return d
   }
 }
