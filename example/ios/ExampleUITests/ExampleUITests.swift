@@ -130,6 +130,28 @@ final class ExampleUITests: XCTestCase {
     toTop()
   }
 
+  func testReportsTheMinimizedGeometry() throws {
+    try XCTSkipIf(vertical, "the vertical bar never minimizes")
+    tab("Optionen")
+    // Without the accessory, no environment change measures along.
+    let accessory = element(containing: "Bottom Accessory")
+    reveal(accessory)
+    accessory.tap()
+    defer {
+      toTop()
+      reveal(accessory)
+      accessory.tap()
+    }
+    toTop()
+    XCTAssertTrue(geometryText.contains("minimiert false"), geometryText)
+    scrollDown()
+    XCTAssertFalse(expanded, "scrolling down minimizes")
+    XCTAssertTrue(geometryText.contains("minimiert true"), geometryText)
+    toTop()
+    XCTAssertTrue(expanded, "reaching the top expands")
+    XCTAssertTrue(geometryText.contains("minimiert false"), geometryText)
+  }
+
   func testPullingAtTheTopDoesNotMinimize() {
     toTop()
     XCTAssertTrue(expanded)
