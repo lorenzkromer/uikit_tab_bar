@@ -88,7 +88,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     proxy.onReachedTop = { [weak self] in self?.expandIfMinimized() }
     host.onWindow = { [weak self] window in self?.windowChanged(window) }
     host.onLayout = { [weak self] in self?.pokeGeometry() }
-    host.onTouch = { [weak self] in self?.pokeGeometry() }
+    host.onTouch = { [weak self] in self?.keepPollingGeometry() }
     channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call, result: result)
     }
@@ -141,7 +141,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         func d(_ k: String) -> Double { (args[k] as? NSNumber)?.doubleValue ?? 0 }
         proxy.mirror(pixels: d("pixels"), min: d("min"), max: d("max"))
         // Scrolling can minimize or expand the bar, again without a callback.
-        pokeGeometry()
+        keepPollingGeometry()
       }
       result(nil)
     case "search":
@@ -380,9 +380,15 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   /// Layout changes animate without callbacks we can hook (minimize, hide,
   /// accessory), so poll at display rate for a moment after any trigger.
   private func pokeGeometry() {
+    keepPollingGeometry()
+    reportGeometry()
+  }
+
+  /// Polls without measuring right away, for triggers that fire several
+  /// times a frame (scroll updates, hit tests) before the layout changes.
+  private func keepPollingGeometry() {
     pollUntil = CACurrentMediaTime() + 1.0
     displayLink?.isPaused = false
-    reportGeometry()
   }
 
   private func startDisplayLink() {
