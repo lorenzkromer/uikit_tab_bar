@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.2
 
 * Vertical bar on the inner display of iPhone Duo (iOS 27.2): when the app
   starts unfolded, UIKit switches to the vertical layout without building
