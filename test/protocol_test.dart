@@ -190,6 +190,80 @@ void main() {
     });
   });
 
+  test('encodes the toolbar of the vertical bar', () {
+    final encoded = encodeState(
+      TabBarState(
+        tabs: const [_home],
+        selectedId: 'home',
+        toolbar: UIKitToolbar(
+          navigation: const [
+            UIKitToolbarItem(id: 'close', icon: UIKitTabIcon.symbol('xmark'), label: 'Close'),
+          ],
+          groups: const [
+            [
+              UIKitToolbarItem(
+                id: 'compose',
+                icon: UIKitTabIcon.symbol('square.and.pencil'),
+                label: 'New',
+                badge: '',
+                priority: UIKitToolbarItemPriority.high,
+                style: UIKitToolbarItemStyle.prominent,
+              ),
+            ],
+            [],
+          ],
+          menu: const [UIKitToolbarMenuItem(id: 'logout', label: 'Log out', destructive: true)],
+          compression: UIKitVerticalBarCompression.prefersToolbar,
+        ),
+      ),
+      _noImages,
+    );
+    final toolbar = encoded['toolbar']! as Map;
+    expect((toolbar['navigation'] as List).single, containsPair('id', 'close'));
+    // Empty groups are dropped.
+    expect(toolbar['groups'], hasLength(1));
+    expect(((toolbar['groups'] as List).single as List).single, {
+      'id': 'compose',
+      'icon': {'symbol': 'square.and.pencil'},
+      'label': 'New',
+      'badge': '',
+      'priority': 'high',
+      'prominent': true,
+      'enabled': true,
+    });
+    expect((toolbar['menu'] as List).single, containsPair('destructive', true));
+    expect(toolbar['compression'], 'prefersToolbar');
+  });
+
+  test('no toolbar, or an empty one, is sent as null', () {
+    const state = TabBarState(tabs: [_home], selectedId: 'home');
+    expect(encodeState(state, _noImages)['toolbar'], isNull);
+    expect(
+      encodeState(
+        const TabBarState(tabs: [_home], selectedId: 'home', toolbar: UIKitToolbar()),
+        _noImages,
+      )['toolbar'],
+      isNull,
+    );
+  });
+
+  test('toolbar ids must be unique', () {
+    expect(
+      () => encodeState(
+        const TabBarState(
+          tabs: [_home],
+          selectedId: 'home',
+          toolbar: UIKitToolbar(
+            navigation: [UIKitToolbarItem(id: 'a', icon: UIKitTabIcon.symbol('xmark'), label: 'A')],
+            menu: [UIKitToolbarMenuItem(id: 'a', label: 'A')],
+          ),
+        ),
+        _noImages,
+      ),
+      throwsAssertionError,
+    );
+  });
+
   test('encodedEquals compares deeply', () {
     expect(
       encodedEquals({

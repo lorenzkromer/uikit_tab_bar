@@ -24,6 +24,7 @@ configuration renders a standard `CupertinoTabBar`.
 | Tint, selected color, title font from app assets, title offset, badge colors, offset and font | ✓ | tint, badge colors, offset and font |
 | Light/dark following the app theme (not only the system) | ✓ | ✓ |
 | Vertical bar at the leading or trailing edge (iPhone Duo), opt-out | ✓ iOS 27.1+ | – (always at the bottom) |
+| Toolbar in the vertical bar: navigation, action groups, badges, priorities, overflow menu | ✓ iOS 27.1+ | – |
 | Reported geometry (bottom inset, frames, minimized state) | ✓ | ✓ |
 
 ## Usage
@@ -105,6 +106,63 @@ this only for screens that are better served by horizontal bars, as a
 stable choice. It applies to the whole window (or presentation), because
 UIKit resolves it from the root view controller: the package sets it on
 the root of the Flutter view controller's hierarchy.
+
+### Toolbar in the vertical bar
+
+On iPhone Duo the system also moves toolbar and navigation buttons into
+the column, above the tabs ([Vertical controls](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo#Vertical-controls)
+in the Human Interface Guidelines). `UIKitTabBar.toolbar` describes them;
+UIKit draws, groups and compresses them:
+
+```dart
+UIKitTabBar(
+  tabs: [...],
+  toolbar: UIKitToolbar(
+    // Back or Close: at the top of the column.
+    navigation: const [
+      UIKitToolbarItem(id: 'close', icon: UIKitTabIcon.symbol('xmark'), label: 'Close'),
+    ],
+    // Actions in groups of related items, prominent ones first.
+    groups: const [
+      [
+        UIKitToolbarItem(
+          id: 'compose',
+          icon: UIKitTabIcon.symbol('square.and.pencil'),
+          label: 'New message',
+          style: UIKitToolbarItemStyle.prominent,
+          priority: UIKitToolbarItemPriority.high,
+        ),
+      ],
+      [
+        UIKitToolbarItem(id: 'inbox', icon: UIKitTabIcon.symbol('tray'), label: 'Inbox', badge: '2'),
+        UIKitToolbarItem(id: 'profile', icon: UIKitTabIcon.symbol('person.crop.circle'), label: 'Profile'),
+      ],
+    ],
+    // Extra entries of the system overflow menu.
+    menu: const [UIKitToolbarMenuItem(id: 'settings', label: 'Settings')],
+    onPressed: (id) { ... },
+  ),
+)
+```
+
+| HIG | API |
+| --- | --- |
+| Navigation controls at the top, then prominent actions | `navigation`, then `groups` in order; `UIKitToolbarItemStyle.prominent` |
+| Group related items, no manual spacing | one list per group in `groups` |
+| A title and a symbol for every item | `label` and `icon` are required |
+| Badges | `badge` (an empty string shows a dot) |
+| Prioritize frequently used items | `priority`: `low`, `standard`, `high` |
+| Use the system overflow menu | automatic for items that do not fit; `menu` adds entries |
+| Preserve the toolbar or the tab bar when space is limited | `compression`: `prefersTabBar` (default) or `prefersToolbar` |
+
+The buttons take the bar's tint and brightness. Their frames are part of
+`UIKitTabBarGeometry.hitRects`; `toolbarRect` is the frame around them.
+
+The toolbar is only shown in the vertical bar. While the bar is horizontal
+(other iPhones, the inner display held upright,
+`UIKitVerticalBarBehavior.disabled`) and with the fallback bar, nothing is
+shown and `toolbarRect` is `null`: show your own bar there, with the same
+actions in the same order.
 
 ## What works under Liquid Glass
 

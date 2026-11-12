@@ -329,6 +329,189 @@ enum UIKitVerticalBarEdge {
   trailing,
 }
 
+/// How long a [UIKitToolbarItem] stays visible when the vertical bar runs
+/// out of space (`UIBarButtonItem.visibilityPriority`, iOS 27+).
+///
+/// Items overflow from bottom to top by default. Apple's guidance: keep
+/// frequently used actions and items that convey status (badges) longer.
+enum UIKitToolbarItemPriority {
+  /// Moves into the system overflow menu first.
+  low,
+
+  /// The system's default order.
+  standard,
+
+  /// Stays visible longest.
+  high,
+}
+
+/// Appearance of a [UIKitToolbarItem].
+enum UIKitToolbarItemStyle {
+  /// A regular glass button.
+  plain,
+
+  /// The tinted, prominent treatment for the main action of a screen
+  /// (e.g. Done).
+  prominent,
+}
+
+/// What gives way first when tabs and toolbar items share the vertical bar
+/// and space is tight (`UINavigationItem.verticalBarCompressionBehavior`,
+/// iOS 27.1+).
+enum UIKitVerticalBarCompression {
+  /// The system decides; on iOS that is [prefersTabBar].
+  automatic,
+
+  /// Navigation-focused screens: toolbar items move into the overflow menu,
+  /// all tabs stay reachable.
+  prefersTabBar,
+
+  /// Task-focused screens: the tab bar collapses into a single control,
+  /// the toolbar items stay.
+  prefersToolbar,
+}
+
+/// A button of the [UIKitToolbar].
+///
+/// Give every item an [icon] and a [label]: the vertical bar shows the icon,
+/// the system overflow menu and accessibility use the label.
+@immutable
+class UIKitToolbarItem {
+  /// Creates a toolbar item.
+  const UIKitToolbarItem({
+    required this.id,
+    required this.icon,
+    required this.label,
+    this.badge,
+    this.priority = UIKitToolbarItemPriority.standard,
+    this.style = UIKitToolbarItemStyle.plain,
+    this.enabled = true,
+  });
+
+  /// Identifier passed to [UIKitToolbar.onPressed].
+  final String id;
+
+  /// Icon of the button. Prefer an SF Symbol; images are template images.
+  final UIKitTabIcon icon;
+
+  /// Title of the item, shown in the overflow menu and read by VoiceOver.
+  final String label;
+
+  /// Badge text; an empty string shows a dot. `null` for no badge.
+  final String? badge;
+
+  /// How long the item stays visible when space is tight.
+  final UIKitToolbarItemPriority priority;
+
+  /// Plain or prominent.
+  final UIKitToolbarItemStyle style;
+
+  /// Whether the item can be pressed.
+  final bool enabled;
+
+  @override
+  bool operator ==(Object other) =>
+      other is UIKitToolbarItem &&
+      other.id == id &&
+      other.icon == icon &&
+      other.label == label &&
+      other.badge == badge &&
+      other.priority == priority &&
+      other.style == style &&
+      other.enabled == enabled;
+
+  @override
+  int get hashCode => Object.hash(id, icon, label, badge, priority, style, enabled);
+}
+
+/// An entry of the system overflow menu of the [UIKitToolbar].
+@immutable
+class UIKitToolbarMenuItem {
+  /// Creates a menu entry.
+  const UIKitToolbarMenuItem({
+    required this.id,
+    required this.label,
+    this.icon,
+    this.destructive = false,
+    this.enabled = true,
+  });
+
+  /// Identifier passed to [UIKitToolbar.onPressed].
+  final String id;
+
+  /// Title of the entry.
+  final String label;
+
+  /// Optional icon.
+  final UIKitTabIcon? icon;
+
+  /// Shown in red, for actions that delete something.
+  final bool destructive;
+
+  /// Whether the entry can be chosen.
+  final bool enabled;
+
+  @override
+  bool operator ==(Object other) =>
+      other is UIKitToolbarMenuItem &&
+      other.id == id &&
+      other.label == label &&
+      other.icon == icon &&
+      other.destructive == destructive &&
+      other.enabled == enabled;
+
+  @override
+  int get hashCode => Object.hash(id, label, icon, destructive, enabled);
+}
+
+/// The app's toolbar in the vertical bar (iOS 27.1+, iPhone Duo).
+///
+/// On hardware with a vertical bar, the system moves toolbar and navigation
+/// buttons into the same column as the tabs, above them. This describes
+/// those buttons; UIKit lays them out, groups them and moves what does not
+/// fit into its overflow menu.
+///
+/// Order in the column, following Apple's guidance: [navigation] (Back,
+/// Close) at the top, then [groups] in the given order, prominent actions
+/// first.
+///
+/// Nothing is shown while the bar is horizontal (other iPhones, the inner
+/// display held upright, [UIKitVerticalBarBehavior.disabled]) and with the
+/// fallback bar: show your own bar there.
+/// [UIKitTabBarGeometry.toolbarRect] is `null` then.
+@immutable
+class UIKitToolbar {
+  /// Creates a toolbar.
+  const UIKitToolbar({
+    this.navigation = const [],
+    this.groups = const [],
+    this.menu = const [],
+    this.compression = UIKitVerticalBarCompression.automatic,
+    this.onPressed,
+  });
+
+  /// Primary navigation controls such as Back or Close, at the top of the
+  /// column.
+  final List<UIKitToolbarItem> navigation;
+
+  /// The actions, in groups of related items. The system keeps a group
+  /// together on one glass background and spaces the groups.
+  final List<List<UIKitToolbarItem>> groups;
+
+  /// Additional entries of the system overflow menu (the ellipsis button).
+  /// Items that do not fit are added to the same menu by the system.
+  final List<UIKitToolbarMenuItem> menu;
+
+  /// What gives way first when space is tight.
+  final UIKitVerticalBarCompression compression;
+
+  /// Called with the id of the pressed item or chosen menu entry.
+  final ValueChanged<String>? onPressed;
+
+  /// Whether there is nothing to show.
+  bool get isEmpty => navigation.isEmpty && groups.every((g) => g.isEmpty) && menu.isEmpty;
+}
+
 /// Visual options of the native bar.
 ///
 /// Only properties that measurably take effect under Liquid Glass are
@@ -436,6 +619,7 @@ class UIKitTabBarGeometry {
     this.barRect,
     this.accessoryRect,
     this.searchFieldRect,
+    this.toolbarRect,
     this.hitRects = const [],
     this.minimized = false,
     this.hidden = false,
@@ -489,6 +673,11 @@ class UIKitTabBarGeometry {
   /// Frame of the native search field, while shown.
   final Rect? searchFieldRect;
 
+  /// Frame around the buttons of the [UIKitToolbar] in the vertical bar;
+  /// `null` while they are not shown (no toolbar, or the bar is
+  /// horizontal).
+  final Rect? toolbarRect;
+
   /// Areas where the native bar draws and takes touches.
   final List<Rect> hitRects;
 
@@ -513,6 +702,7 @@ class UIKitTabBarGeometry {
       other.barRect == barRect &&
       other.accessoryRect == accessoryRect &&
       other.searchFieldRect == searchFieldRect &&
+      other.toolbarRect == toolbarRect &&
       listEquals(other.hitRects, hitRects) &&
       other.minimized == minimized &&
       other.hidden == hidden &&
@@ -520,13 +710,14 @@ class UIKitTabBarGeometry {
 
   @override
   int get hashCode => Object.hash(isNative, bottomInset, topInset, leftInset, rightInset,
-      verticalBarEdge, barRect, accessoryRect, searchFieldRect, Object.hashAll(hitRects), minimized,
+      verticalBarEdge, barRect, accessoryRect, searchFieldRect, toolbarRect, Object.hashAll(hitRects),
+      minimized,
       hidden, accessoryEnvironment);
 
   @override
   String toString() => 'UIKitTabBarGeometry(native: $isNative, bottomInset: $bottomInset, '
       'topInset: $topInset, leftInset: $leftInset, rightInset: $rightInset, '
       'verticalBarEdge: ${verticalBarEdge.name}, '
-      'bar: $barRect, accessory: $accessoryRect, minimized: $minimized, hidden: $hidden, '
+      'bar: $barRect, accessory: $accessoryRect, toolbar: $toolbarRect, minimized: $minimized, hidden: $hidden, '
       'accessory: ${accessoryEnvironment.name})';
 }

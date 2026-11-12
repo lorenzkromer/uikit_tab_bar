@@ -81,6 +81,60 @@ struct AccessorySpec: Equatable {
   }
 }
 
+struct ToolbarItemSpec: Equatable {
+  var id: String
+  var icon: IconSpec?
+  var label: String
+  var badge: String?
+  /// "low", "standard" or "high".
+  var priority: String
+  var prominent: Bool
+  var enabled: Bool
+
+  init(_ m: [String: Any]) {
+    id = m["id"] as? String ?? ""
+    icon = IconSpec(m["icon"])
+    label = m["label"] as? String ?? ""
+    badge = m["badge"] as? String
+    priority = m["priority"] as? String ?? "standard"
+    prominent = m["prominent"] as? Bool ?? false
+    enabled = m["enabled"] as? Bool ?? true
+  }
+}
+
+struct ToolbarMenuItemSpec: Equatable {
+  var id: String
+  var label: String
+  var icon: IconSpec?
+  var destructive: Bool
+  var enabled: Bool
+
+  init(_ m: [String: Any]) {
+    id = m["id"] as? String ?? ""
+    label = m["label"] as? String ?? ""
+    icon = IconSpec(m["icon"])
+    destructive = m["destructive"] as? Bool ?? false
+    enabled = m["enabled"] as? Bool ?? true
+  }
+}
+
+/// The app's buttons in the vertical bar (iOS 27.1).
+struct ToolbarSpec: Equatable {
+  var navigation: [ToolbarItemSpec]
+  var groups: [[ToolbarItemSpec]]
+  var menu: [ToolbarMenuItemSpec]
+  /// "automatic", "prefersTabBar" or "prefersToolbar".
+  var compression: String
+
+  init?(_ value: Any?) {
+    guard let m = value as? [String: Any] else { return nil }
+    navigation = (m["navigation"] as? [[String: Any]] ?? []).map(ToolbarItemSpec.init)
+    groups = (m["groups"] as? [[[String: Any]]] ?? []).map { $0.map(ToolbarItemSpec.init) }
+    menu = (m["menu"] as? [[String: Any]] ?? []).map(ToolbarMenuItemSpec.init)
+    compression = m["compression"] as? String ?? "automatic"
+  }
+}
+
 struct StyleSpec: Equatable {
   var tint: UInt32?
   var selected: UInt32?
@@ -129,6 +183,7 @@ struct BarState: Equatable {
   var minimizeBehavior: String
   var hidden: Bool
   var accessory: AccessorySpec?
+  var toolbar: ToolbarSpec?
   var style: StyleSpec
   var brightness: String
   var rtl: Bool
@@ -143,6 +198,7 @@ struct BarState: Equatable {
     minimizeBehavior = m["minimizeBehavior"] as? String ?? "automatic"
     hidden = m["hidden"] as? Bool ?? false
     accessory = AccessorySpec(m["accessory"])
+    toolbar = ToolbarSpec(m["toolbar"])
     style = StyleSpec(m["style"])
     brightness = m["brightness"] as? String ?? "light"
     rtl = m["rtl"] as? Bool ?? false
@@ -165,6 +221,7 @@ struct BarDiff: Equatable {
   var minimize = false
   var hidden = false
   var accessory = false
+  var toolbar = false
   var style = false
   var brightness = false
   var rtl = false
@@ -176,7 +233,7 @@ struct BarDiff: Equatable {
     guard let old else {
       var all = BarDiff(
         structure: true, search: true, prominent: true, minimize: true, hidden: true,
-        accessory: true, style: true, brightness: true, rtl: true, verticalBar: true)
+        accessory: true, toolbar: true, style: true, brightness: true, rtl: true, verticalBar: true)
       all.changedTabs = Set(new.tabs.map(\.id))
       return all
     }
@@ -189,6 +246,7 @@ struct BarDiff: Equatable {
     d.minimize = old.minimizeBehavior != new.minimizeBehavior
     d.hidden = old.hidden != new.hidden
     d.accessory = old.accessory != new.accessory
+    d.toolbar = old.toolbar != new.toolbar
     d.style = old.style != new.style
     d.brightness = old.brightness != new.brightness
     d.rtl = old.rtl != new.rtl

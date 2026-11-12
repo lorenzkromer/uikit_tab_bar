@@ -81,8 +81,10 @@ final class ExampleUITests: XCTestCase {
     // Off screen, Flutter reports an empty frame.
     let height = window.frame.height
     func visible() -> Bool {
+      // Further down the lazy list, the element does not exist yet.
+      guard element.exists else { return false }
       let f = element.frame
-      return element.exists && f.height > 0 && f.minY > height * 0.1 && f.maxY < height * 0.7
+      return f.height > 0 && f.minY > height * 0.1 && f.maxY < height * 0.7
     }
     for _ in 0..<8 where !visible() {
       point(0.4, 0.6).press(forDuration: 0.05, thenDragTo: point(0.4, 0.35), withVelocity: 600, thenHoldForDuration: 0.3)
@@ -225,6 +227,34 @@ final class ExampleUITests: XCTestCase {
     accessory.tap()
     sleep(1)
     XCTAssertTrue(element(containing: "accessory tapped").exists)
+    tab("Home")
+  }
+
+  func testVerticalBarToolbar() throws {
+    try XCTSkipUnless(vertical, "no vertical bar on this device")
+    // On the options page, which shows the last event.
+    tab("Optionen")
+    toTop()
+    let compose = app.buttons["Neu"].firstMatch
+    XCTAssertTrue(compose.exists, "toolbar item in the column")
+    let home = app.buttons["Home"].firstMatch.frame
+    XCTAssertEqual(compose.frame.midX, home.midX, accuracy: 4, "same column as the tabs")
+    XCTAssertLessThan(compose.frame.maxY, home.minY, "above the tabs")
+    compose.tap()
+    sleep(1)
+    XCTAssertTrue(element(containing: "toolbar compose").exists)
+    // The system overflow menu holds what does not fit, and the app's entries.
+    let more = app.buttons.matching(NSPredicate(format: "label IN {'More', 'Mehr'}")).firstMatch
+    if more.exists {
+      more.tap()
+      sleep(1)
+      app.buttons["Einstellungen"].firstMatch.tap()
+      sleep(1)
+      XCTAssertTrue(element(containing: "toolbar settings").exists)
+    }
+    // Touches next to the column still reach Flutter.
+    scrollDown()
+    toTop()
     tab("Home")
   }
 

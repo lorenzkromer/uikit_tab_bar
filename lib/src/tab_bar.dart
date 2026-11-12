@@ -29,6 +29,7 @@ class UIKitTabBar extends StatefulWidget {
     this.minimizeBehavior = UIKitTabBarMinimizeBehavior.automatic,
     this.hidden = false,
     this.accessory,
+    this.toolbar,
     this.style = const UIKitTabBarStyle(),
     this.verticalBarBehavior = UIKitVerticalBarBehavior.automatic,
     this.controller,
@@ -63,6 +64,11 @@ class UIKitTabBar extends StatefulWidget {
 
   /// Optional bottom accessory above the bar (iOS 26+).
   final UIKitTabAccessory? accessory;
+
+  /// Buttons the system shows in the vertical bar above the tabs
+  /// (iOS 27.1+, e.g. iPhone Duo): navigation controls, actions, an
+  /// overflow menu. Not shown while the bar is horizontal.
+  final UIKitToolbar? toolbar;
 
   /// Visual options.
   final UIKitTabBarStyle style;

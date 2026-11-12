@@ -99,6 +99,7 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
     minimizeBehavior: _config.minimizeBehavior,
     hidden: _config.hidden,
     accessory: _config.accessory,
+    toolbar: _config.toolbar,
     style: _config.style,
     brightness:
         _config.style.brightness ??
@@ -186,6 +187,8 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
         _config.accessory?.onTap?.call();
       case 'accessoryAction':
         _config.accessory?.onAction?.call(args['id'] as String);
+      case 'toolbarPressed':
+        _config.toolbar?.onPressed?.call(args['id'] as String);
     }
     return null;
   }

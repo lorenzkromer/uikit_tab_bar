@@ -48,6 +48,7 @@ class TabBarState {
     this.minimizeBehavior = UIKitTabBarMinimizeBehavior.automatic,
     this.hidden = false,
     this.accessory,
+    this.toolbar,
     this.style = const UIKitTabBarStyle(),
     this.brightness = Brightness.light,
     this.rtl = false,
@@ -74,6 +75,9 @@ class TabBarState {
 
   /// Optional accessory.
   final UIKitTabAccessory? accessory;
+
+  /// Optional toolbar of the vertical bar.
+  final UIKitToolbar? toolbar;
 
   /// Style.
   final UIKitTabBarStyle style;
@@ -102,6 +106,16 @@ class TabBarState {
         if (action.icon is! UIKitSymbolIcon) yield action.icon;
       }
     }
+    final toolbar = this.toolbar;
+    if (toolbar != null) {
+      for (final item in [...toolbar.navigation, ...toolbar.groups.expand((g) => g)]) {
+        if (item.icon is! UIKitSymbolIcon) yield item.icon;
+      }
+      for (final entry in toolbar.menu) {
+        final icon = entry.icon;
+        if (icon != null && icon is! UIKitSymbolIcon) yield icon;
+      }
+    }
   }
 }
 
@@ -121,6 +135,25 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
   final style = state.style;
   final search = state.searchTab;
   final accessory = state.accessory;
+  final toolbar = state.toolbar;
+  assert(() {
+    if (toolbar == null) return true;
+    final ids = [
+      ...toolbar.navigation.map((i) => i.id),
+      ...toolbar.groups.expand((g) => g).map((i) => i.id),
+      ...toolbar.menu.map((i) => i.id),
+    ];
+    return ids.toSet().length == ids.length;
+  }(), 'Toolbar item ids must be unique.');
+  Map<String, Object?> encodeItem(UIKitToolbarItem item) => {
+        'id': item.id,
+        'icon': encodeIcon(item.icon, lookup),
+        'label': item.label,
+        'badge': item.badge,
+        'priority': item.priority.name,
+        'prominent': item.style == UIKitToolbarItemStyle.prominent,
+        'enabled': item.enabled,
+      };
   return {
     'tabs': [
       for (final tab in state.tabs)
@@ -161,6 +194,26 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
                   'label': action.semanticLabel,
                 },
             ],
+          },
+    'toolbar': toolbar == null || toolbar.isEmpty
+        ? null
+        : {
+            'navigation': [for (final item in toolbar.navigation) encodeItem(item)],
+            'groups': [
+              for (final group in toolbar.groups)
+                if (group.isNotEmpty) [for (final item in group) encodeItem(item)],
+            ],
+            'menu': [
+              for (final entry in toolbar.menu)
+                {
+                  'id': entry.id,
+                  'label': entry.label,
+                  'icon': entry.icon == null ? null : encodeIcon(entry.icon!, lookup),
+                  'destructive': entry.destructive,
+                  'enabled': entry.enabled,
+                },
+            ],
+            'compression': toolbar.compression.name,
           },
     'style': {
       'tint': encodeColor(style.tintColor),
@@ -249,6 +302,7 @@ UIKitTabBarGeometry decodeGeometry(Map<Object?, Object?> m) {
     barRect: _rect(m['bar']),
     accessoryRect: _rect(m['accessory']),
     searchFieldRect: _rect(m['search']),
+    toolbarRect: _rect(m['toolbar']),
     hitRects: [
       for (final r in (m['hitRects'] as List? ?? const [])) ?_rect(r),
     ],

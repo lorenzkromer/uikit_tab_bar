@@ -35,6 +35,7 @@ class _ExampleAppState extends State<ExampleApp> {
 class DemoOptions {
   bool hidden = false;
   bool accessory = true;
+  bool toolbar = true;
   bool prominent = false;
   bool search = true;
   bool autoSearch = false;
@@ -209,6 +210,40 @@ class _DemoHomeState extends State<DemoHome> {
               onAction: (id) => _event('accessory action $id'),
             )
           : null,
+      toolbar: options.toolbar
+          ? UIKitToolbar(
+              groups: const [
+                [
+                  UIKitToolbarItem(
+                    id: 'compose',
+                    icon: UIKitTabIcon.symbol('square.and.pencil'),
+                    label: 'Neu',
+                    priority: UIKitToolbarItemPriority.high,
+                  ),
+                ],
+                [
+                  UIKitToolbarItem(
+                    id: 'inbox',
+                    icon: UIKitTabIcon.symbol('tray'),
+                    label: 'Eingang',
+                    badge: '2',
+                  ),
+                  UIKitToolbarItem(
+                    id: 'profile',
+                    icon: UIKitTabIcon.symbol('person.crop.circle'),
+                    label: 'Profil',
+                    priority: UIKitToolbarItemPriority.low,
+                  ),
+                ],
+              ],
+              menu: const [
+                UIKitToolbarMenuItem(
+                    id: 'settings', label: 'Einstellungen', icon: UIKitTabIcon.symbol('gearshape')),
+                UIKitToolbarMenuItem(id: 'logout', label: 'Abmelden', destructive: true),
+              ],
+              onPressed: (id) => _event('toolbar $id'),
+            )
+          : null,
       style: _style,
       verticalBarBehavior:
           options.verticalBarDisabled ? UIKitVerticalBarBehavior.disabled : UIKitVerticalBarBehavior.automatic,
@@ -347,6 +382,8 @@ class _OptionsPage extends StatelessWidget {
           ),
         ),
         _switch('Bottom Accessory', options.accessory, (v) => options.accessory = v),
+        _switch('Toolbar-Items', options.toolbar, (v) => options.toolbar = v,
+            subtitle: 'toolbar: in der vertikalen Bar, iOS 27.1+ (iPhone Duo)'),
         _switch('Events hervorheben', options.prominent, (v) => options.prominent = v,
             subtitle: 'prominentTabIdentifier, iOS 27+'),
         _switch('Such-Tab', options.search, (v) => options.search = v),

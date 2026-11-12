@@ -1,3 +1,19 @@
+## 0.3.0
+
+* Toolbar in the vertical bar (iOS 27.1+, iPhone Duo): `UIKitTabBar.toolbar`
+  takes a `UIKitToolbar` with navigation controls, groups of actions and
+  entries for the system overflow menu. UIKit shows them in the column above
+  the tabs, as glass buttons with the bar's tint, and moves what does not
+  fit into its overflow menu.
+  * `UIKitToolbarItem`: icon, label, badge, `priority` (what stays visible
+    longest) and `style` (`prominent` for the main action).
+  * `UIKitToolbar.compression`: whether the toolbar or the tab bar gives way
+    first when space is tight.
+  * `UIKitToolbar.onPressed` reports the pressed item or menu entry.
+  * `UIKitTabBarGeometry.toolbarRect`; the buttons are part of `hitRects`.
+* The toolbar is only shown in the vertical bar; nothing changes while the
+  bar is horizontal, and nothing changes for apps without a toolbar.
+
 ## 0.2.2
 
 * Vertical bar on the inner display of iPhone Duo (iOS 27.2): when the app
