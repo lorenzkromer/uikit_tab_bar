@@ -69,6 +69,10 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   private var displayLink: CADisplayLink?
   private var pollUntil: CFTimeInterval = 0
   private var searchActive = false
+  /// Since when the vertical bar is shown without its column of tabs, and
+  /// whether UIKit was already asked to rebuild it (see `rebuildColumn`).
+  private var columnMissingSince: CFTimeInterval?
+  private var columnRebuilt = false
 
   init(frame: CGRect, channel: FlutterMethodChannel, args: [String: Any]) {
     host = HostView(frame: frame)
@@ -424,6 +428,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     let barVisible = !controller.isTabBarHidden && !bar.isHidden && bar.alpha > 0.01 && !squeezed
     if barVisible {
       glass = vertical ? floatingGlassRects() : glassRects(in: bar)
+      rebuildColumn(ifMissing: vertical && glass.isEmpty)
       hitRects += glass.map(rectList)
       barRect = rectList(bar.convert(bar.bounds, to: host))
     }
@@ -469,6 +474,35 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     }
   }
 
+  /// On the inner display of iPhone Duo (iOS 27.2), UIKit switches to the
+  /// vertical layout when the app starts unfolded, but does not build the
+  /// column of tabs: the edge stays empty. Showing the bar again builds it.
+  /// Done once per appearance of the vertical bar, and only after the
+  /// column stayed away for a moment, since it normally arrives a few
+  /// frames after the layout.
+  private func rebuildColumn(ifMissing missing: Bool) {
+    guard missing else {
+      columnMissingSince = nil
+      columnRebuilt = false
+      return
+    }
+    guard !columnRebuilt else { return }
+    let now = CACurrentMediaTime()
+    guard let since = columnMissingSince else {
+      columnMissingSince = now
+      keepPollingGeometry()
+      return
+    }
+    guard now - since > 0.25 else {
+      keepPollingGeometry()
+      return
+    }
+    columnRebuilt = true
+    controller.setTabBarHidden(true, animated: false)
+    controller.setTabBarHidden(false, animated: false)
+    keepPollingGeometry()
+  }
+
   /// The floating glass capsules inside the (full-width) tab bar view.
   private func glassRects(in bar: UITabBar) -> [CGRect] {
     var out: [CGRect] = []
@@ -489,7 +523,10 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   }
 
   /// The glass column of the vertical bar. UIKit hosts it in the tab bar
-  /// controller's view, next to the content, not inside `UITabBar`.
+  /// controller's view, next to the content, not inside `UITabBar`. Empty
+  /// while UIKit has not built the column: the tab bar's bounds are the
+  /// whole strip at the edge, which would swallow touches with nothing
+  /// drawn there.
   private func floatingGlassRects() -> [CGRect] {
     let content = controller.selectedViewController?.view
     var out: [CGRect] = []
@@ -506,7 +543,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       v.subviews.forEach { visit($0, depth: depth + 1) }
     }
     controller.view.subviews.forEach { visit($0, depth: 0) }
-    return out.isEmpty ? [controller.tabBar.convert(controller.tabBar.bounds, to: host)] : out
+    return out
   }
 
   private var searchNavigationBar: UINavigationBar? {

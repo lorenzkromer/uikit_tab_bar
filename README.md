@@ -166,10 +166,11 @@ offered in `UIKitTabBarStyle`.
 * **Search mode.** While the native search field is active, the platform
   view fills the screen so UIKit shows the field at the top, as natively;
   `UIKitTabScaffold` pads the content top by `UIKitTabBarGeometry.topInset`.
-* **Vertical bar.** Verified on the iPhone Duo simulator (iOS 27.1) in
-  portrait and both landscape orientations. The simulator of Xcode 27.1
-  offers no hinge control, so the unfolded state was not verified; all
-  positions come from UIKit, nothing assumes a screen size.
+* **Vertical bar.** Verified on the iPhone Duo simulator: folded (iOS 27.1
+  and 27.2) in portrait and both landscape orientations, unfolded
+  (iOS 27.2) in all orientations. Unfolded, UIKit shows the column only
+  while the window is wider than tall; rotated, the bar is at the bottom.
+  All positions come from UIKit, nothing assumes a screen size.
 * **iPad.** The phone-style bottom bar is shown (compact size class). The
   top tab bar, sidebar, tab groups and drag and drop are not supported.
 * **Overlays.** Flutter content painted above the bar region (dialogs,

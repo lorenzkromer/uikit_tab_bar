@@ -1,3 +1,12 @@
+## Unreleased
+
+* Vertical bar on the inner display of iPhone Duo (iOS 27.2): when the app
+  starts unfolded, UIKit switches to the vertical layout without building
+  the column of tabs. The bar is now shown again once in that case, which
+  builds it.
+* While the vertical bar has no column, its empty strip is no longer part
+  of `UIKitTabBarGeometry.hitRects`, so it does not swallow touches.
+
 ## 0.2.1
 
 * Report geometry after a touch on the bar and while the content scrolls.

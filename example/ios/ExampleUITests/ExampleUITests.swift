@@ -28,9 +28,13 @@ final class ExampleUITests: XCTestCase {
   /// Point in the content area, in fractions of the screen (the tests run
   /// on phones of different sizes, e.g. iPhone Air and iPhone Duo).
   func point(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
-    let size = app.frame.size
-    return app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: size.width * x, dy: size.height * y))
+    window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y))
   }
+
+  /// The app's window. Right after a launch on the unfolded iPhone Duo,
+  /// `app.frame` and coordinates relative to `app` still belong to the
+  /// other orientation; the window is right.
+  var window: XCUIElement { app.windows.firstMatch }
 
   /// Finger up: content scrolls down.
   func scrollDown() {
@@ -75,9 +79,10 @@ final class ExampleUITests: XCTestCase {
   /// screen, clear of the accessory.
   func reveal(_ element: XCUIElement) {
     // Off screen, Flutter reports an empty frame.
+    let height = window.frame.height
     func visible() -> Bool {
       let f = element.frame
-      return element.exists && f.height > 0 && f.minY > app.frame.height * 0.1 && f.maxY < app.frame.height * 0.7
+      return element.exists && f.height > 0 && f.minY > height * 0.1 && f.maxY < height * 0.7
     }
     for _ in 0..<8 where !visible() {
       point(0.4, 0.6).press(forDuration: 0.05, thenDragTo: point(0.4, 0.35), withVelocity: 600, thenHoldForDuration: 0.3)
@@ -91,6 +96,16 @@ final class ExampleUITests: XCTestCase {
       close.tap()
       sleep(1)
     }
+  }
+
+  /// Types into the focused search field, replacing what an earlier test
+  /// left there.
+  func search(_ text: String, in field: XCUIElement) {
+    if let old = field.value as? String, !old.isEmpty, old != field.placeholderValue {
+      app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
+    }
+    app.typeText(text)
+    sleep(1)
   }
 
   func shot(_ name: String) {
@@ -163,8 +178,7 @@ final class ExampleUITests: XCTestCase {
     XCTAssertTrue(field.waitForExistence(timeout: 2))
     field.tap()
     sleep(1)
-    app.typeText("burg")
-    sleep(1)
+    search("burg", in: field)
     shot("search")
     // Like a native UISearchTab: the active field moves to the top, right
     // below the status bar (measured natively: y = 68 on an iPhone Air).
@@ -225,8 +239,7 @@ final class ExampleUITests: XCTestCase {
     shot("vertical_search")
     field.tap()
     sleep(1)
-    app.typeText("burg")
-    sleep(1)
+    search("burg", in: field)
     shot("vertical_searching")
     XCTAssertTrue(app.staticTexts["Hamburg"].exists)
     XCTAssertFalse(app.staticTexts["Berlin"].exists)
@@ -237,6 +250,9 @@ final class ExampleUITests: XCTestCase {
 
   func testVerticalBarFollowsTheRotation() throws {
     try XCTSkipUnless(vertical, "no vertical bar on this device")
+    // Unfolded, the window is wider than tall when held upright, and the
+    // bar returns to the bottom in the other orientations.
+    try XCTSkipIf(window.frame.width > window.frame.height, "inner display: no column when rotated")
     tab("Optionen")
     toTop()
     func choose(_ label: String) {
