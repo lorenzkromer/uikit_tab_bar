@@ -36,6 +36,7 @@ class DemoOptions {
   bool hidden = false;
   bool accessory = true;
   bool toolbar = true;
+  UIKitTabsVisibility tabsVisibility = UIKitTabsVisibility.visible;
   bool prominent = false;
   bool search = true;
   bool autoSearch = false;
@@ -195,6 +196,7 @@ class _DemoHomeState extends State<DemoHome> {
       prominentTabId: options.prominent ? 'events' : null,
       minimizeBehavior: options.minimize,
       hidden: options.hidden,
+      tabsVisibility: options.tabsVisibility,
       accessory: options.accessory
           ? UIKitTabAccessory(
               title: 'Läuft gerade – Folge 7',
@@ -212,6 +214,13 @@ class _DemoHomeState extends State<DemoHome> {
           : null,
       toolbar: options.toolbar
           ? UIKitToolbar(
+              // Like a pushed page: without the tabs, Back sits at the top
+              // of the column and brings them back.
+              navigation: [
+                if (options.tabsVisibility != UIKitTabsVisibility.visible)
+                  const UIKitToolbarItem(
+                      id: 'back', icon: UIKitTabIcon.symbol('chevron.backward'), label: 'Zurück'),
+              ],
               groups: const [
                 [
                   UIKitToolbarItem(
@@ -241,7 +250,10 @@ class _DemoHomeState extends State<DemoHome> {
                     id: 'settings', label: 'Einstellungen', icon: UIKitTabIcon.symbol('gearshape')),
                 UIKitToolbarMenuItem(id: 'logout', label: 'Abmelden', destructive: true),
               ],
-              onPressed: (id) => _event('toolbar $id'),
+              onPressed: (id) {
+                if (id == 'back') options.tabsVisibility = UIKitTabsVisibility.visible;
+                _event('toolbar $id');
+              },
             )
           : null,
       style: _style,
@@ -361,7 +373,7 @@ class _OptionsPage extends StatelessWidget {
             title: const Text('Geometrie'),
             subtitle: Text(
               'bottomInset ${g.bottomInset.toStringAsFixed(1)} · minimiert ${g.minimized} · '
-              'versteckt ${g.hidden} · Accessory ${g.accessoryEnvironment.name} · '
+              'versteckt ${g.hidden} · Tabs aus ${g.tabsHidden} · Accessory ${g.accessoryEnvironment.name} · '
               'vertikal ${g.verticalBarEdge.name} (links ${g.leftInset.toStringAsFixed(0)}, '
               'rechts ${g.rightInset.toStringAsFixed(0)})',
             ),
@@ -386,6 +398,21 @@ class _OptionsPage extends StatelessWidget {
             subtitle: 'toolbar: in der vertikalen Bar, iOS 27.1+ (iPhone Duo)'),
         _switch('Events hervorheben', options.prominent, (v) => options.prominent = v,
             subtitle: 'prominentTabIdentifier, iOS 27+'),
+        ListTile(
+          title: const Text('Tabs'),
+          subtitle: SegmentedButton<UIKitTabsVisibility>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: UIKitTabsVisibility.visible, label: Text('Tabs an', style: TextStyle(fontSize: 11))),
+              ButtonSegment(
+                  value: UIKitTabsVisibility.hiddenInVerticalBar,
+                  label: Text('Vertikal aus', style: TextStyle(fontSize: 11))),
+              ButtonSegment(value: UIKitTabsVisibility.hidden, label: Text('Tabs aus', style: TextStyle(fontSize: 11))),
+            ],
+            selected: {options.tabsVisibility},
+            onSelectionChanged: (s) => onChanged(() => options.tabsVisibility = s.first),
+          ),
+        ),
         _switch('Such-Tab', options.search, (v) => options.search = v),
         _switch('Vertikale Bar aus', options.verticalBarDisabled, (v) => options.verticalBarDisabled = v,
             subtitle: 'verticalBarBehavior: disabled, iOS 27.1+ (iPhone Duo)'),

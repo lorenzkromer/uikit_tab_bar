@@ -258,6 +258,40 @@ final class ExampleUITests: XCTestCase {
     tab("Home")
   }
 
+  /// Toolbar without the tabs, e.g. a pushed page with only Back.
+  func testVerticalBarWithoutTabs() throws {
+    try XCTSkipUnless(vertical, "no vertical bar on this device")
+    tab("Optionen")
+    toTop()
+    let hide = app.buttons["Tabs aus"].firstMatch
+    reveal(hide)
+    let home = app.buttons["Home"].firstMatch
+    let back = app.buttons["Zurück"].firstMatch
+    let column = home.frame
+    for round in 0..<3 {
+      hide.tap()
+      sleep(2)
+      shot("vertical_no_tabs_\(round)")
+      XCTAssertFalse(home.exists && home.isHittable, "the tabs are gone")
+      XCTAssertTrue(back.exists, "Back at the top of the column")
+      XCTAssertTrue(app.buttons["Neu"].firstMatch.isHittable, "the toolbar stays")
+      // Where the tabs were, touches reach Flutter again.
+      XCTAssertTrue(geometryText.contains("Tabs aus true"), geometryText)
+      XCTAssertTrue(geometryText.contains("versteckt false"), geometryText)
+      back.tap()
+      sleep(2)
+      shot("vertical_tabs_back_\(round)")
+      XCTAssertTrue(vertical, "the tabs are back")
+      XCTAssertEqual(home.frame.midY, column.midY, accuracy: 2, "where they were")
+      XCTAssertTrue(app.buttons["Optionen"].firstMatch.isSelected, "selection kept")
+      XCTAssertFalse(back.exists)
+    }
+    toTop()
+    XCTAssertTrue(element(containing: "toolbar back").exists)
+    XCTAssertTrue(geometryText.contains("Tabs aus false"), geometryText)
+    tab("Home")
+  }
+
   func testVerticalBarSearch() throws {
     try XCTSkipUnless(vertical, "no vertical bar on this device")
     tab("Suche")

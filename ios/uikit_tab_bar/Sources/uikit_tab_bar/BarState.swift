@@ -182,6 +182,8 @@ struct BarState: Equatable {
   var prominentId: String?
   var minimizeBehavior: String
   var hidden: Bool
+  /// "visible", "hiddenInVerticalBar" or "hidden".
+  var tabsVisibility: String
   var accessory: AccessorySpec?
   var toolbar: ToolbarSpec?
   var style: StyleSpec
@@ -197,6 +199,7 @@ struct BarState: Equatable {
     prominentId = m["prominentId"] as? String
     minimizeBehavior = m["minimizeBehavior"] as? String ?? "automatic"
     hidden = m["hidden"] as? Bool ?? false
+    tabsVisibility = m["tabsVisibility"] as? String ?? "visible"
     accessory = AccessorySpec(m["accessory"])
     toolbar = ToolbarSpec(m["toolbar"])
     style = StyleSpec(m["style"])
@@ -244,7 +247,7 @@ struct BarDiff: Equatable {
     d.search = old.search != new.search
     d.prominent = old.prominentId != new.prominentId
     d.minimize = old.minimizeBehavior != new.minimizeBehavior
-    d.hidden = old.hidden != new.hidden
+    d.hidden = old.hidden != new.hidden || old.tabsVisibility != new.tabsVisibility
     d.accessory = old.accessory != new.accessory
     d.toolbar = old.toolbar != new.toolbar
     d.style = old.style != new.style

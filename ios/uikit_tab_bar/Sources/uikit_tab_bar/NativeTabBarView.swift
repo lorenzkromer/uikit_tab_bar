@@ -190,11 +190,15 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         controller.tabBar.semanticContentAttribute = attribute
       }
       if diff.minimize { applyMinimizeBehavior(new.minimizeBehavior) }
-      if diff.hidden, new.hidden != controller.isTabBarHidden {
-        controller.setTabBarHidden(new.hidden, animated: animated)
+      if tabsShouldHide != controller.isTabBarHidden {
+        controller.setTabBarHidden(tabsShouldHide, animated: animated)
       }
       if diff.accessory { applyAccessory(new.accessory, animated: animated) }
-      if diff.toolbar { refreshToolbar() }
+      if diff.toolbar || diff.hidden {
+        // Same batch as the tabs: no frame with both or neither.
+        if new.hidden || new.toolbar == nil { toolbarShown = false }
+        refreshToolbar()
+      }
       if diff.verticalBar { applyVerticalBarBehavior() }
       #if compiler(>=6.4)  // iOS 27 SDK, see "SDK guards" at the top of this file
         if #available(iOS 27.0, *), diff.prominent || diff.structure {
@@ -244,8 +248,23 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     // Keep hidden tabs' objects (and thus their state) for when they return.
     let known = Set(s.tabs.map(\.id) + (s.search.map { [$0.id] } ?? []))
     for id in tabs.keys where !known.contains(id) { tabs[id] = nil }
-    if diff.structure {
+    // Without any tab the controller keeps the previous ones and the bar is
+    // hidden instead (see `tabsShouldHide`): an empty set leaves a stub of
+    // glass behind, and the tabs do not recover from it (iOS 27.2).
+    if diff.structure, !ids.isEmpty {
       controller.setTabs(ids.compactMap { tabs[$0] }, animated: animated)
+    }
+  }
+
+  /// Whether the tabs are not to be shown: `UITabBarController` hides its
+  /// bar, and in the vertical bar the column keeps the toolbar.
+  private var tabsShouldHide: Bool {
+    guard let state else { return false }
+    if state.hidden || state.rootIds.isEmpty { return true }
+    switch state.tabsVisibility {
+    case "hidden": return true
+    case "hiddenInVerticalBar": return VerticalBar.edge(of: controller.traitCollection) != .none
+    default: return false
     }
   }
 
@@ -541,29 +560,37 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     var toolbarRect: [Double] = []
     // The toolbar only exists in the vertical bar. Changing the navigation
     // items lays out again, so not from inside this pass.
-    let showToolbar = vertical && !squeezed && state?.toolbar != nil
-    if showToolbar != toolbarShown {
+    let showToolbar = vertical && !squeezed && state?.toolbar != nil && state?.hidden != true
+    // `hiddenInVerticalBar` follows the bar as it turns.
+    let hideTabs = tabsShouldHide
+    if showToolbar != toolbarShown || hideTabs != controller.isTabBarHidden {
       toolbarShown = showToolbar
       DispatchQueue.main.async { [weak self] in
-        self?.refreshToolbar()
-        self?.pokeGeometry()
+        guard let self else { return }
+        if self.tabsShouldHide != self.controller.isTabBarHidden {
+          self.controller.setTabBarHidden(self.tabsShouldHide, animated: false)
+        }
+        self.refreshToolbar()
+        self.pokeGeometry()
       }
     }
     let barVisible = !controller.isTabBarHidden && !bar.isHidden && bar.alpha > 0.01 && !squeezed
-    if barVisible {
-      if vertical {
+    if vertical {
+      if barVisible || toolbarShown {
         let column = columnGlass()
-        glass = column.tabs + column.toolbar
+        // Without the tabs only the toolbar's glass counts: whatever else
+        // UIKit leaves in the column must not take touches.
+        glass = (barVisible ? column.tabs : []) + column.toolbar
         if let first = column.toolbar.first {
           toolbarRect = rectList(column.toolbar.dropFirst().reduce(first) { $0.union($1) })
         }
-      } else {
-        glass = glassRects(in: bar)
+        rebuildColumn(ifMissing: glass.isEmpty)
       }
-      rebuildColumn(ifMissing: vertical && glass.isEmpty)
-      hitRects += glass.map(rectList)
-      barRect = rectList(bar.convert(bar.bounds, to: host))
+    } else if barVisible {
+      glass = glassRects(in: bar)
     }
+    hitRects += glass.map(rectList)
+    if barVisible { barRect = rectList(bar.convert(bar.bounds, to: host)) }
     var accessoryRect: [Double] = []
     if let content = accessoryView, content.window != nil, !content.isHidden {
       let r = content.convert(content.bounds, to: host).insetBy(dx: -4, dy: -4)
@@ -591,7 +618,8 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       "search": searchRect,
       "toolbar": toolbarRect,
       "hitRects": hitRects,
-      "hidden": controller.isTabBarHidden,
+      "hidden": controller.isTabBarHidden && !toolbarShown,
+      "tabsHidden": controller.isTabBarHidden,
       "minimized": minimized,
       "bottomInset": Double(max(0, host.bounds.maxY - guide.maxY)),
       "leftInset": Double(max(0, guide.minX - host.bounds.minX)),
@@ -631,8 +659,9 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       return
     }
     columnRebuilt = true
-    controller.setTabBarHidden(true, animated: false)
-    controller.setTabBarHidden(false, animated: false)
+    let hidden = controller.isTabBarHidden
+    controller.setTabBarHidden(!hidden, animated: false)
+    controller.setTabBarHidden(hidden, animated: false)
     keepPollingGeometry()
   }
 

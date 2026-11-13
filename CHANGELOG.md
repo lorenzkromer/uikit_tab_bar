@@ -1,3 +1,19 @@
+## 0.4.0
+
+* `UIKitTabBar.tabsVisibility` (`visible`, `hiddenInVerticalBar`, `hidden`):
+  shows the toolbar without the tabs in the vertical bar, e.g. only Back on
+  a pushed page. The tabs stay part of the bar, so selection, badges and
+  order survive, and the change can come in the same update as new toolbar
+  contents. In the horizontal bar and the fallback bar, `hidden` hides the
+  bar like `UIKitTabBar.hidden`.
+* `UIKitTabBarGeometry.tabsHidden`. `hidden` now means that nothing is shown:
+  it stays `false` while the vertical bar still shows the toolbar. Without
+  the tabs, `hitRects` only holds the toolbar's buttons.
+* `UIKitTabBar.hidden` hides the toolbar together with the tabs.
+* Fixed: with every tab marked `UIKitTab.hidden`, an empty piece of glass
+  stayed in the vertical bar and the tabs did not come back correctly. The
+  bar now hides its tabs instead and restores them.
+
 ## 0.3.0
 
 * Toolbar in the vertical bar (iOS 27.1+, iPhone Duo): `UIKitTabBar.toolbar`

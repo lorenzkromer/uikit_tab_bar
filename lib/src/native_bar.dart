@@ -98,6 +98,7 @@ class NativeTabBarState extends State<NativeTabBar> implements UIKitTabBarConnec
     prominentTabId: _config.prominentTabId,
     minimizeBehavior: _config.minimizeBehavior,
     hidden: _config.hidden,
+    tabsVisibility: _config.tabsVisibility,
     accessory: _config.accessory,
     toolbar: _config.toolbar,
     style: _config.style,

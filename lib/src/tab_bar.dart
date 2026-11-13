@@ -28,6 +28,7 @@ class UIKitTabBar extends StatefulWidget {
     this.prominentTabId,
     this.minimizeBehavior = UIKitTabBarMinimizeBehavior.automatic,
     this.hidden = false,
+    this.tabsVisibility = UIKitTabsVisibility.visible,
     this.accessory,
     this.toolbar,
     this.style = const UIKitTabBarStyle(),
@@ -59,8 +60,16 @@ class UIKitTabBar extends StatefulWidget {
   /// Whether the bar minimizes while scrolling (iOS 26+).
   final UIKitTabBarMinimizeBehavior minimizeBehavior;
 
-  /// Hides the bar with the system animation.
+  /// Hides the bar with the system animation: tabs, accessory and
+  /// [toolbar].
   final bool hidden;
+
+  /// Whether the tabs are shown. Independent of [toolbar], and changeable
+  /// in the same update: tabs only, toolbar only (the vertical bar with
+  /// [UIKitTabsVisibility.hidden] or
+  /// [UIKitTabsVisibility.hiddenInVerticalBar]), both, or neither
+  /// ([hidden]). Hidden tabs keep their selection, badges and order.
+  final UIKitTabsVisibility tabsVisibility;
 
   /// Optional bottom accessory above the bar (iOS 26+).
   final UIKitTabAccessory? accessory;

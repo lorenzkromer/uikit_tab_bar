@@ -247,6 +247,24 @@ void main() {
     );
   });
 
+  test('encodes the tabs visibility and decodes tabsHidden', () {
+    const state = TabBarState(tabs: [_home], selectedId: 'home');
+    expect(encodeState(state, _noImages)['tabsVisibility'], 'visible');
+    expect(
+      encodeState(
+        const TabBarState(
+            tabs: [_home], selectedId: 'home', tabsVisibility: UIKitTabsVisibility.hiddenInVerticalBar),
+        _noImages,
+      )['tabsVisibility'],
+      'hiddenInVerticalBar',
+    );
+    // Toolbar only: the tabs are hidden, the bar is not.
+    final g = decodeGeometry({'hidden': false, 'tabsHidden': true});
+    expect(g.hidden, isFalse);
+    expect(g.tabsHidden, isTrue);
+    expect(decodeGeometry({'hidden': true}).tabsHidden, isTrue);
+  });
+
   test('toolbar ids must be unique', () {
     expect(
       () => encodeState(

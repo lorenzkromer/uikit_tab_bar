@@ -70,6 +70,21 @@ void main() {
     expect(find.byType(CupertinoTabBar), findsNothing);
   });
 
+  testWidgets('tabsVisibility: only hidden hides the fallback bar', (tester) async {
+    final controller = UIKitTabBarController();
+    addTearDown(controller.dispose);
+    Widget bar(UIKitTabsVisibility v) => _app(UIKitTabBar(
+        tabs: _tabs, selectedId: 'home', onSelected: (_) {}, tabsVisibility: v, controller: controller));
+    await tester.pumpWidget(bar(UIKitTabsVisibility.hiddenInVerticalBar));
+    await tester.pump();
+    expect(find.byType(CupertinoTabBar), findsOneWidget);
+    expect(controller.geometry.value.tabsHidden, isFalse);
+    await tester.pumpWidget(bar(UIKitTabsVisibility.hidden));
+    await tester.pump();
+    expect(find.byType(CupertinoTabBar), findsNothing);
+    expect(controller.geometry.value.tabsHidden, isTrue);
+  });
+
   testWidgets('reports a non-native geometry', (tester) async {
     final controller = UIKitTabBarController();
     addTearDown(controller.dispose);

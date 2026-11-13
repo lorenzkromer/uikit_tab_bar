@@ -47,6 +47,7 @@ class TabBarState {
     this.prominentTabId,
     this.minimizeBehavior = UIKitTabBarMinimizeBehavior.automatic,
     this.hidden = false,
+    this.tabsVisibility = UIKitTabsVisibility.visible,
     this.accessory,
     this.toolbar,
     this.style = const UIKitTabBarStyle(),
@@ -72,6 +73,9 @@ class TabBarState {
 
   /// Whether the bar is hidden.
   final bool hidden;
+
+  /// Whether the tabs are shown.
+  final UIKitTabsVisibility tabsVisibility;
 
   /// Optional accessory.
   final UIKitTabAccessory? accessory;
@@ -180,6 +184,7 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
     'prominentId': state.prominentTabId,
     'minimizeBehavior': state.minimizeBehavior.name,
     'hidden': state.hidden,
+    'tabsVisibility': state.tabsVisibility.name,
     'accessory': accessory == null
         ? null
         : {
@@ -308,6 +313,7 @@ UIKitTabBarGeometry decodeGeometry(Map<Object?, Object?> m) {
     ],
     minimized: m['minimized'] == true,
     hidden: m['hidden'] == true,
+    tabsHidden: (m['tabsHidden'] ?? m['hidden']) == true,
     accessoryEnvironment: UIKitTabAccessoryEnvironment.values.firstWhere(
       (e) => e.name == m['accessoryEnvironment'],
       orElse: () => UIKitTabAccessoryEnvironment.none,

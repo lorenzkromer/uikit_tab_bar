@@ -51,8 +51,9 @@ class FallbackTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _items;
     final padding = MediaQuery.paddingOf(context).bottom;
-    if (config.hidden || items.length < 2) {
-      _report(UIKitTabBarGeometry(isNative: false, bottomInset: padding, hidden: config.hidden));
+    final hidden = config.hidden || config.tabsVisibility == UIKitTabsVisibility.hidden;
+    if (hidden || items.length < 2) {
+      _report(UIKitTabBarGeometry(isNative: false, bottomInset: padding, hidden: hidden, tabsHidden: hidden));
       return const SizedBox.shrink();
     }
     final index = items.indexWhere((i) => i.id == config.selectedId);

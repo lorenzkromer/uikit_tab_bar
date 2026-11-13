@@ -164,6 +164,46 @@ The toolbar is only shown in the vertical bar. While the bar is horizontal
 shown and `toolbarRect` is `null`: show your own bar there, with the same
 actions in the same order.
 
+### Toolbar without the tabs
+
+`UIKitTabBar.tabsVisibility` chooses whether the tabs are shown, per screen
+and independently of the toolbar. A pushed page that only wants Back at the
+top of the column:
+
+```dart
+UIKitTabBar(
+  tabs: tabs,
+  tabsVisibility: detail ? UIKitTabsVisibility.hidden : UIKitTabsVisibility.visible,
+  toolbar: UIKitToolbar(
+    navigation: [if (detail) back],
+    groups: detail ? const [] : actions,
+    onPressed: ...,
+  ),
+)
+```
+
+| `tabsVisibility` | Vertical bar | Horizontal bar, fallback bar |
+| --- | --- | --- |
+| `visible` (default) | tabs and toolbar | tabs |
+| `hiddenInVerticalBar` | toolbar only | tabs |
+| `hidden` | toolbar only | nothing, like `hidden: true` |
+
+`hidden: true` still hides everything, toolbar included. The tabs stay part
+of the bar while they are not shown: selection, badges and order are kept,
+and UIKit animates them out and in. Tab visibility and toolbar contents can
+change in the same update.
+
+`UIKitTabBarGeometry.tabsHidden` tells that the tabs are not shown;
+`hidden` is only `true` when the toolbar is not shown either. Without the
+tabs, `hitRects` holds just the toolbar's buttons (`toolbarRect`), so the
+rest of the column lets touches through, and `compression` has nothing to
+weigh up.
+
+Do not mark every tab `UIKitTab.hidden` to get there. That is now handled
+like `UIKitTabsVisibility.hidden` (UIKit does not recover from an empty set
+of tabs), but `tabsVisibility` says what is meant. A bar that never had a
+visible tab shows no toolbar either.
+
 ## What works under Liquid Glass
 
 Measured on iOS 27 (iPhone Air simulator). Only what takes effect is

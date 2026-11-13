@@ -123,6 +123,10 @@ class UIKitTab {
 
   /// Removes the tab from the bar while keeping its native state, e.g.
   /// for tabs that depend on a login.
+  ///
+  /// With every tab hidden (and no search tab) the bar shows no tabs, like
+  /// [UIKitTabsVisibility.hidden]. To hide all tabs for a screen, prefer
+  /// [UIKitTabBar.tabsVisibility].
   final bool hidden;
 
   @override
@@ -329,6 +333,29 @@ enum UIKitVerticalBarEdge {
   trailing,
 }
 
+/// Whether the bar shows its tabs.
+///
+/// The tabs stay part of the bar: selection, badges and order are kept, and
+/// showing them again restores them as they were. Use this for screens that
+/// only want the [UIKitToolbar] in the vertical bar, e.g. a pushed detail
+/// page with just Back at the top of the column.
+///
+/// To hide everything, tabs and toolbar, use [UIKitTabBar.hidden].
+enum UIKitTabsVisibility {
+  /// The tabs are shown.
+  visible,
+
+  /// The tabs are not shown while the bar is vertical (iOS 27.1+, e.g.
+  /// iPhone Duo); the column then holds only the toolbar. The horizontal bar
+  /// and the fallback bar keep their tabs.
+  hiddenInVerticalBar,
+
+  /// The tabs are not shown at all. The vertical bar keeps the toolbar; the
+  /// horizontal bar and the fallback bar are hidden as with
+  /// [UIKitTabBar.hidden].
+  hidden,
+}
+
 /// How long a [UIKitToolbarItem] stays visible when the vertical bar runs
 /// out of space (`UIBarButtonItem.visibilityPriority`, iOS 27+).
 ///
@@ -502,7 +529,8 @@ class UIKitToolbar {
   /// Items that do not fit are added to the same menu by the system.
   final List<UIKitToolbarMenuItem> menu;
 
-  /// What gives way first when space is tight.
+  /// What gives way first when space is tight. Without tabs
+  /// ([UIKitTabBar.tabsVisibility]) there is nothing to weigh up.
   final UIKitVerticalBarCompression compression;
 
   /// Called with the id of the pressed item or chosen menu entry.
@@ -623,6 +651,7 @@ class UIKitTabBarGeometry {
     this.hitRects = const [],
     this.minimized = false,
     this.hidden = false,
+    this.tabsHidden = false,
     this.accessoryEnvironment = UIKitTabAccessoryEnvironment.none,
   });
 
@@ -684,8 +713,15 @@ class UIKitTabBarGeometry {
   /// Whether the bar is currently minimized.
   final bool minimized;
 
-  /// Whether the bar is hidden.
+  /// Whether the bar shows nothing: neither tabs nor toolbar.
   final bool hidden;
+
+  /// Whether the tabs are not shown ([UIKitTabBar.hidden],
+  /// [UIKitTabBar.tabsVisibility], or every tab is [UIKitTab.hidden]).
+  /// `true` with [hidden] `false` means the vertical bar holds only the
+  /// toolbar, at [toolbarRect]; the rest of the column is free and lets
+  /// touches through.
+  final bool tabsHidden;
 
   /// Where the accessory currently sits.
   final UIKitTabAccessoryEnvironment accessoryEnvironment;
@@ -706,18 +742,18 @@ class UIKitTabBarGeometry {
       listEquals(other.hitRects, hitRects) &&
       other.minimized == minimized &&
       other.hidden == hidden &&
+      other.tabsHidden == tabsHidden &&
       other.accessoryEnvironment == accessoryEnvironment;
 
   @override
   int get hashCode => Object.hash(isNative, bottomInset, topInset, leftInset, rightInset,
       verticalBarEdge, barRect, accessoryRect, searchFieldRect, toolbarRect, Object.hashAll(hitRects),
-      minimized,
-      hidden, accessoryEnvironment);
+      minimized, hidden, tabsHidden, accessoryEnvironment);
 
   @override
   String toString() => 'UIKitTabBarGeometry(native: $isNative, bottomInset: $bottomInset, '
       'topInset: $topInset, leftInset: $leftInset, rightInset: $rightInset, '
       'verticalBarEdge: ${verticalBarEdge.name}, '
-      'bar: $barRect, accessory: $accessoryRect, toolbar: $toolbarRect, minimized: $minimized, hidden: $hidden, '
+      'bar: $barRect, accessory: $accessoryRect, toolbar: $toolbarRect, minimized: $minimized, hidden: $hidden, tabsHidden: $tabsHidden, '
       'accessory: ${accessoryEnvironment.name})';
 }
