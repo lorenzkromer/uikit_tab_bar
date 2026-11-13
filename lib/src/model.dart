@@ -512,6 +512,7 @@ class UIKitToolbar {
   const UIKitToolbar({
     this.navigation = const [],
     this.groups = const [],
+    this.bottomGroups = const [],
     this.menu = const [],
     this.compression = UIKitVerticalBarCompression.automatic,
     this.onPressed,
@@ -525,6 +526,18 @@ class UIKitToolbar {
   /// together on one glass background and spaces the groups.
   final List<List<UIKitToolbarItem>> groups;
 
+  /// Groups at the bottom of the column, e.g. previous / next on a detail
+  /// page, apart from [navigation] at the top. Items are laid out top to
+  /// bottom as given.
+  ///
+  /// These are the items of UIKit's bottom toolbar
+  /// (`UIViewController.toolbarItems`), which the system moves into the
+  /// column. It shows them while the tabs are not shown
+  /// ([UIKitTabBar.tabsVisibility]); with the tabs visible, the tabs take
+  /// the bottom of the column. [UIKitTabBarGeometry.bottomToolbarRect] is
+  /// their frame.
+  final List<List<UIKitToolbarItem>> bottomGroups;
+
   /// Additional entries of the system overflow menu (the ellipsis button).
   /// Items that do not fit are added to the same menu by the system.
   final List<UIKitToolbarMenuItem> menu;
@@ -537,7 +550,11 @@ class UIKitToolbar {
   final ValueChanged<String>? onPressed;
 
   /// Whether there is nothing to show.
-  bool get isEmpty => navigation.isEmpty && groups.every((g) => g.isEmpty) && menu.isEmpty;
+  bool get isEmpty =>
+      navigation.isEmpty &&
+      groups.every((g) => g.isEmpty) &&
+      bottomGroups.every((g) => g.isEmpty) &&
+      menu.isEmpty;
 }
 
 /// Visual options of the native bar.
@@ -648,6 +665,7 @@ class UIKitTabBarGeometry {
     this.accessoryRect,
     this.searchFieldRect,
     this.toolbarRect,
+    this.bottomToolbarRect,
     this.hitRects = const [],
     this.minimized = false,
     this.hidden = false,
@@ -702,10 +720,16 @@ class UIKitTabBarGeometry {
   /// Frame of the native search field, while shown.
   final Rect? searchFieldRect;
 
-  /// Frame around the buttons of the [UIKitToolbar] in the vertical bar;
-  /// `null` while they are not shown (no toolbar, or the bar is
+  /// Frame around the buttons at the top of the vertical bar
+  /// ([UIKitToolbar.navigation], [UIKitToolbar.groups] and the overflow
+  /// button); `null` while they are not shown (no toolbar, or the bar is
   /// horizontal).
   final Rect? toolbarRect;
+
+  /// Frame around [UIKitToolbar.bottomGroups] at the bottom of the vertical
+  /// bar; `null` while they are not shown. The column between [toolbarRect]
+  /// and this rect is free and lets touches through.
+  final Rect? bottomToolbarRect;
 
   /// Areas where the native bar draws and takes touches.
   final List<Rect> hitRects;
@@ -739,6 +763,7 @@ class UIKitTabBarGeometry {
       other.accessoryRect == accessoryRect &&
       other.searchFieldRect == searchFieldRect &&
       other.toolbarRect == toolbarRect &&
+      other.bottomToolbarRect == bottomToolbarRect &&
       listEquals(other.hitRects, hitRects) &&
       other.minimized == minimized &&
       other.hidden == hidden &&
@@ -747,13 +772,13 @@ class UIKitTabBarGeometry {
 
   @override
   int get hashCode => Object.hash(isNative, bottomInset, topInset, leftInset, rightInset,
-      verticalBarEdge, barRect, accessoryRect, searchFieldRect, toolbarRect, Object.hashAll(hitRects),
+      verticalBarEdge, barRect, accessoryRect, searchFieldRect, toolbarRect, bottomToolbarRect, Object.hashAll(hitRects),
       minimized, hidden, tabsHidden, accessoryEnvironment);
 
   @override
   String toString() => 'UIKitTabBarGeometry(native: $isNative, bottomInset: $bottomInset, '
       'topInset: $topInset, leftInset: $leftInset, rightInset: $rightInset, '
       'verticalBarEdge: ${verticalBarEdge.name}, '
-      'bar: $barRect, accessory: $accessoryRect, toolbar: $toolbarRect, minimized: $minimized, hidden: $hidden, tabsHidden: $tabsHidden, '
+      'bar: $barRect, accessory: $accessoryRect, toolbar: $toolbarRect, bottomToolbar: $bottomToolbarRect, minimized: $minimized, hidden: $hidden, tabsHidden: $tabsHidden, '
       'accessory: ${accessoryEnvironment.name})';
 }

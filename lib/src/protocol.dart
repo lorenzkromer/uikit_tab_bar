@@ -112,7 +112,11 @@ class TabBarState {
     }
     final toolbar = this.toolbar;
     if (toolbar != null) {
-      for (final item in [...toolbar.navigation, ...toolbar.groups.expand((g) => g)]) {
+      for (final item in [
+        ...toolbar.navigation,
+        ...toolbar.groups.expand((g) => g),
+        ...toolbar.bottomGroups.expand((g) => g),
+      ]) {
         if (item.icon is! UIKitSymbolIcon) yield item.icon;
       }
       for (final entry in toolbar.menu) {
@@ -145,6 +149,7 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
     final ids = [
       ...toolbar.navigation.map((i) => i.id),
       ...toolbar.groups.expand((g) => g).map((i) => i.id),
+      ...toolbar.bottomGroups.expand((g) => g).map((i) => i.id),
       ...toolbar.menu.map((i) => i.id),
     ];
     return ids.toSet().length == ids.length;
@@ -206,6 +211,10 @@ Map<String, Object?> encodeState(TabBarState state, IconLookup lookup) {
             'navigation': [for (final item in toolbar.navigation) encodeItem(item)],
             'groups': [
               for (final group in toolbar.groups)
+                if (group.isNotEmpty) [for (final item in group) encodeItem(item)],
+            ],
+            'bottomGroups': [
+              for (final group in toolbar.bottomGroups)
                 if (group.isNotEmpty) [for (final item in group) encodeItem(item)],
             ],
             'menu': [
@@ -308,6 +317,7 @@ UIKitTabBarGeometry decodeGeometry(Map<Object?, Object?> m) {
     accessoryRect: _rect(m['accessory']),
     searchFieldRect: _rect(m['search']),
     toolbarRect: _rect(m['toolbar']),
+    bottomToolbarRect: _rect(m['bottomToolbar']),
     hitRects: [
       for (final r in (m['hitRects'] as List? ?? const [])) ?_rect(r),
     ],

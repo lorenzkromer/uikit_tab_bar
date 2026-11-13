@@ -122,6 +122,8 @@ struct ToolbarMenuItemSpec: Equatable {
 struct ToolbarSpec: Equatable {
   var navigation: [ToolbarItemSpec]
   var groups: [[ToolbarItemSpec]]
+  /// Groups at the bottom of the column (`toolbarItems`).
+  var bottomGroups: [[ToolbarItemSpec]]
   var menu: [ToolbarMenuItemSpec]
   /// "automatic", "prefersTabBar" or "prefersToolbar".
   var compression: String
@@ -130,6 +132,7 @@ struct ToolbarSpec: Equatable {
     guard let m = value as? [String: Any] else { return nil }
     navigation = (m["navigation"] as? [[String: Any]] ?? []).map(ToolbarItemSpec.init)
     groups = (m["groups"] as? [[[String: Any]]] ?? []).map { $0.map(ToolbarItemSpec.init) }
+    bottomGroups = (m["bottomGroups"] as? [[[String: Any]]] ?? []).map { $0.map(ToolbarItemSpec.init) }
     menu = (m["menu"] as? [[String: Any]] ?? []).map(ToolbarMenuItemSpec.init)
     compression = m["compression"] as? String ?? "automatic"
   }

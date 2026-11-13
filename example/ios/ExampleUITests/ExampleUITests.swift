@@ -292,6 +292,53 @@ final class ExampleUITests: XCTestCase {
     tab("Home")
   }
 
+  /// Step controls at the bottom of the column, apart from Back at the top.
+  func testVerticalBarBottomItems() throws {
+    try XCTSkipUnless(vertical, "no vertical bar on this device")
+    tab("Optionen")
+    toTop()
+    let toggle = app.switches.matching(NSPredicate(format: "label BEGINSWITH 'Bottom-Items'")).firstMatch
+    reveal(toggle)
+    toggle.tap()
+    sleep(2)
+    shot("bottom_with_tabs")
+    app.buttons["Tabs aus"].firstMatch.tap()
+    sleep(2)
+    shot("bottom_no_tabs")
+    let previous = app.buttons["Vorheriges"].firstMatch
+    let next = app.buttons["Nächstes"].firstMatch
+    let back = app.buttons["Zurück"].firstMatch
+    XCTAssertTrue(next.exists && back.exists)
+    XCTAssertGreaterThan(next.frame.minY, window.frame.height * 0.6, "at the bottom of the column")
+    XCTAssertLessThan(previous.frame.midY, next.frame.midY, "top to bottom as given")
+    XCTAssertFalse(previous.isEnabled, "first step")
+    // Two frames: the column between them is free.
+    XCTAssertTrue(geometryText.contains("unten 100"), geometryText)
+    XCTAssertFalse(geometryText.contains("Toolbar null"), geometryText)
+    let frame = next.frame
+    next.tap()
+    next.tap()
+    sleep(1)
+    shot("bottom_last_step")
+    XCTAssertFalse(next.isEnabled, "last step")
+    XCTAssertTrue(previous.isEnabled)
+    XCTAssertEqual(next.frame, frame, "updated in place")
+    previous.tap()
+    previous.tap()
+    back.tap()
+    sleep(2)
+    XCTAssertTrue(vertical, "the tabs are back")
+    reveal(toggle)
+    toggle.tap()
+    sleep(2)
+    shot("bottom_off")
+    XCTAssertFalse(next.exists)
+    XCTAssertTrue(geometryText.contains("unten null"), geometryText)
+    toTop()
+    XCTAssertTrue(element(containing: "toolbar back").exists)
+    tab("Home")
+  }
+
   func testVerticalBarSearch() throws {
     try XCTSkipUnless(vertical, "no vertical bar on this device")
     tab("Suche")

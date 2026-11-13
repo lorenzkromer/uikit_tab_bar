@@ -76,6 +76,8 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   private let contents = NSHashTable<UIViewController>.weakObjects()
   /// Whether the toolbar items are shown: only in the vertical bar.
   private var toolbarShown = false
+  /// What `applyToolbar` last put on each content controller.
+  private let appliedToolbars = NSMapTable<UIViewController, AppliedToolbar>.weakToStrongObjects()
   private var columnMissingSince: CFTimeInterval?
   private var columnRebuilt = false
 
@@ -369,11 +371,39 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
   /// visible bar into the column.
   private func applyToolbar(to vc: UIViewController) {
     let spec = toolbarShown ? state?.toolbar : nil
+    let applied = appliedToolbars.object(forKey: vc) ?? AppliedToolbar()
+    appliedToolbars.setObject(applied, forKey: vc)
     let item = vc.navigationItem
-    item.leadingItemGroups =
-      spec.map { $0.navigation.isEmpty ? [] : [group($0.navigation)] } ?? []
-    item.trailingItemGroups = spec?.groups.filter { !$0.isEmpty }.map(group) ?? []
-    item.additionalOverflowItems = spec.flatMap { overflowMenu($0.menu) }
+    let all = spec.map { $0.navigation + ($0.groups + $0.bottomGroups).flatMap { $0 } } ?? []
+    // Which item sits where. As long as that stays, the buttons are
+    // updated in place: a step button that is pressed many times, or
+    // becomes disabled, must not rebuild its glass.
+    let layout = spec.map {
+      [[$0.navigation.map(\.id)], $0.groups.map { $0.map(\.id) }, $0.bottomGroups.map { $0.map(\.id) }]
+    }
+    if layout == applied.layout {
+      for s in all { applied.items[s.id].map { configure($0, s) } }
+    } else {
+      applied.layout = layout
+      applied.items = Dictionary(all.map { ($0.id, barButtonItem($0)) }, uniquingKeysWith: { a, _ in a })
+      func group(_ specs: [ToolbarItemSpec]) -> UIBarButtonItemGroup {
+        UIBarButtonItemGroup.fixedGroup(items: specs.compactMap { applied.items[$0.id] })
+      }
+      item.leadingItemGroups = spec.map { $0.navigation.isEmpty ? [] : [group($0.navigation)] } ?? []
+      item.trailingItemGroups = spec?.groups.filter { !$0.isEmpty }.map(group) ?? []
+      // The bottom toolbar's items; UIKit moves them to the bottom of the
+      // column. A fixed space separates the groups' glass.
+      var bottom: [UIBarButtonItem] = []
+      for specs in spec?.bottomGroups ?? [] where !specs.isEmpty {
+        if !bottom.isEmpty { bottom.append(.fixedSpace(0)) }
+        bottom += specs.compactMap { applied.items[$0.id] }
+      }
+      vc.toolbarItems = bottom
+    }
+    if applied.menu != spec?.menu {
+      applied.menu = spec?.menu
+      item.additionalOverflowItems = spec.flatMap { overflowMenu($0.menu) }
+    }
     // UINavigationItem.verticalBarCompressionBehavior (iOS 27.1 SDK, used
     // dynamically like the rest of the vertical bar, see `VerticalBar`):
     // 0 = automatic, 1 = prefersBarItems, 2 = prefersTabBar.
@@ -384,17 +414,18 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         case "prefersTabBar": 2
         default: 0
         }
-      item.setValue(value, forKey: "verticalBarCompressionBehavior")
+      if (item.value(forKey: "verticalBarCompressionBehavior") as? Int) != value {
+        item.setValue(value, forKey: "verticalBarCompressionBehavior")
+      }
     }
-    if !(vc is SearchPlaceholderViewController), let nav = vc.navigationController,
-      nav.isNavigationBarHidden != (spec == nil)
-    {
+    guard let nav = vc.navigationController else { return }
+    if !(vc is SearchPlaceholderViewController), nav.isNavigationBarHidden != (spec == nil) {
       nav.setNavigationBarHidden(spec == nil, animated: false)
     }
-  }
-
-  private func group(_ specs: [ToolbarItemSpec]) -> UIBarButtonItemGroup {
-    UIBarButtonItemGroup.fixedGroup(items: specs.map(barButtonItem))
+    let noBottom = vc.toolbarItems?.isEmpty ?? true
+    if nav.topViewController === vc, nav.isToolbarHidden != noBottom {
+      nav.setToolbarHidden(noBottom, animated: false)
+    }
   }
 
   private func barButtonItem(_ spec: ToolbarItemSpec) -> UIBarButtonItem {
@@ -403,27 +434,33 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       self?.send("toolbarPressed", ["id": id])
     }
     let item = UIBarButtonItem(primaryAction: action)
+    item.accessibilityIdentifier = id
+    configure(item, spec)
+    return item
+  }
+
+  private func configure(_ item: UIBarButtonItem, _ spec: ToolbarItemSpec) {
+    let image = images.image(spec.icon)
+    if item.image != image { item.image = image }
     // With an image the bar shows the icon; the title is for the overflow
     // menu and VoiceOver.
-    item.title = spec.label
+    if item.title != spec.label { item.title = spec.label }
     item.accessibilityLabel = spec.label
-    item.accessibilityIdentifier = id
-    item.isEnabled = spec.enabled
-    if spec.prominent { item.style = .prominent }
-    if let badge = spec.badge {
-      item.badge = badge.isEmpty ? .indicator() : .string(badge)
-    }
+    if item.isEnabled != spec.enabled { item.isEnabled = spec.enabled }
+    let style: UIBarButtonItem.Style = spec.prominent ? .prominent : .plain
+    if item.style != style { item.style = style }
+    item.badge = spec.badge.map { $0.isEmpty ? .indicator() : .string($0) }
     #if compiler(>=6.4)  // iOS 27 SDK, see "SDK guards" at the top of this file
       if #available(iOS 27.0, *) {
-        item.visibilityPriority =
+        let priority: UIBarButtonItemVisibilityPriority =
           switch spec.priority {
           case "low": .low
           case "high": .high
           default: .standard
           }
+        if item.visibilityPriority != priority { item.visibilityPriority = priority }
       }
     #endif
-    return item
   }
 
   private func overflowMenu(_ specs: [ToolbarMenuItemSpec]) -> UIDeferredMenuElement? {
@@ -558,6 +595,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     var barRect: [Double] = []
     var glass: [CGRect] = []
     var toolbarRect: [Double] = []
+    var bottomToolbarRect: [Double] = []
     // The toolbar only exists in the vertical bar. Changing the navigation
     // items lays out again, so not from inside this pass.
     let showToolbar = vertical && !squeezed && state?.toolbar != nil && state?.hidden != true
@@ -581,9 +619,9 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
         // Without the tabs only the toolbar's glass counts: whatever else
         // UIKit leaves in the column must not take touches.
         glass = (barVisible ? column.tabs : []) + column.toolbar
-        if let first = column.toolbar.first {
-          toolbarRect = rectList(column.toolbar.dropFirst().reduce(first) { $0.union($1) })
-        }
+        let parts = splitToolbar(column.toolbar)
+        toolbarRect = parts.top.map(rectList) ?? []
+        bottomToolbarRect = parts.bottom.map(rectList) ?? []
         rebuildColumn(ifMissing: glass.isEmpty)
       }
     } else if barVisible {
@@ -617,6 +655,7 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
       "accessory": accessoryRect,
       "search": searchRect,
       "toolbar": toolbarRect,
+      "bottomToolbar": bottomToolbarRect,
       "hitRects": hitRects,
       "hidden": controller.isTabBarHidden && !toolbarShown,
       "tabsHidden": controller.isTabBarHidden,
@@ -720,6 +759,32 @@ final class NativeTabBarView: NSObject, FlutterPlatformView, UITabBarControllerD
     return (tabs, toolbar)
   }
 
+  /// The frames around the toolbar's glass at the top of the column and
+  /// around the bottom groups. UIKit draws both with the same views; the
+  /// bottom groups are anchored to the bottom edge, so they are what lies
+  /// below the largest gap. They only show while the tabs are hidden.
+  private func splitToolbar(_ glass: [CGRect]) -> (top: CGRect?, bottom: CGRect?) {
+    func union(_ rects: ArraySlice<CGRect>) -> CGRect? {
+      rects.first.map { rects.dropFirst().reduce($0) { $0.union($1) } }
+    }
+    let rects = glass.sorted { $0.minY < $1.minY }
+    guard let spec = state?.toolbar, controller.isTabBarHidden,
+      spec.bottomGroups.contains(where: { !$0.isEmpty })
+    else { return (union(rects[...]), nil) }
+    var split = 0
+    var widest: CGFloat = 24  // more than the spacing between groups
+    for i in rects.indices.dropFirst() where rects[i].minY - rects[i - 1].maxY > widest {
+      widest = rects[i].minY - rects[i - 1].maxY
+      split = i
+    }
+    if split == 0 {
+      // No gap: only bottom groups, or the column is full.
+      let onlyBottom = spec.navigation.isEmpty && spec.groups.allSatisfy(\.isEmpty) && spec.menu.isEmpty
+      return onlyBottom ? (nil, union(rects[...])) : (union(rects[...]), nil)
+    }
+    return (union(rects[..<split]), union(rects[split...]))
+  }
+
   private var searchNavigationBar: UINavigationBar? {
     guard let id = state?.search?.id, let tab = tabs[id], controller.selectedTab === tab else { return nil }
     return (tab.viewController as? UINavigationController)?.navigationBar
@@ -745,4 +810,11 @@ private final class DisplayLinkTarget: NSObject {
   weak var view: NativeTabBarView?
   init(_ view: NativeTabBarView) { self.view = view }
   @objc func tick() { view?.tick() }
+}
+
+/// The bar button items of one content controller, by Dart id.
+private final class AppliedToolbar {
+  var layout: [[[String]]]?
+  var items: [String: UIBarButtonItem] = [:]
+  var menu: [ToolbarMenuItemSpec]?
 }

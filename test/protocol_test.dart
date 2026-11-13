@@ -265,6 +265,26 @@ void main() {
     expect(decodeGeometry({'hidden': true}).tabsHidden, isTrue);
   });
 
+  test('encodes bottom groups and decodes their frame', () {
+    const next = UIKitToolbarItem(id: 'next', icon: UIKitTabIcon.symbol('chevron.down'), label: 'Next', enabled: false);
+    const toolbar = UIKitToolbar(bottomGroups: [[next], []]);
+    expect(toolbar.isEmpty, isFalse);
+    final encoded = encodeState(
+      const TabBarState(tabs: [_home], selectedId: 'home', toolbar: toolbar),
+      _noImages,
+    )['toolbar']! as Map;
+    final groups = encoded['bottomGroups'] as List;
+    expect(groups, hasLength(1), reason: 'empty groups are dropped');
+    expect((groups.single as List).single, containsPair('enabled', false));
+    final g = decodeGeometry({
+      'toolbar': [394, 170, 54, 54],
+      'bottomToolbar': [394, 554, 48, 100],
+    });
+    expect(g.toolbarRect, const Rect.fromLTWH(394, 170, 54, 54));
+    expect(g.bottomToolbarRect, const Rect.fromLTWH(394, 554, 48, 100));
+    expect(decodeGeometry({}).bottomToolbarRect, isNull);
+  });
+
   test('toolbar ids must be unique', () {
     expect(
       () => encodeState(

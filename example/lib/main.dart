@@ -36,6 +36,8 @@ class DemoOptions {
   bool hidden = false;
   bool accessory = true;
   bool toolbar = true;
+  bool bottomItems = false;
+  int step = 1;
   UIKitTabsVisibility tabsVisibility = UIKitTabsVisibility.visible;
   bool prominent = false;
   bool search = true;
@@ -245,6 +247,22 @@ class _DemoHomeState extends State<DemoHome> {
                   ),
                 ],
               ],
+              // Step controls at the bottom of the column.
+              bottomGroups: [
+                if (options.bottomItems)
+                  [
+                    UIKitToolbarItem(
+                        id: 'previous',
+                        icon: const UIKitTabIcon.symbol('chevron.up'),
+                        label: 'Vorheriges',
+                        enabled: options.step > 1),
+                    UIKitToolbarItem(
+                        id: 'next',
+                        icon: const UIKitTabIcon.symbol('chevron.down'),
+                        label: 'Nächstes',
+                        enabled: options.step < 3),
+                  ],
+              ],
               menu: const [
                 UIKitToolbarMenuItem(
                     id: 'settings', label: 'Einstellungen', icon: UIKitTabIcon.symbol('gearshape')),
@@ -252,7 +270,9 @@ class _DemoHomeState extends State<DemoHome> {
               ],
               onPressed: (id) {
                 if (id == 'back') options.tabsVisibility = UIKitTabsVisibility.visible;
-                _event('toolbar $id');
+                if (id == 'previous') options.step--;
+                if (id == 'next') options.step++;
+                _event('toolbar $id${id == 'previous' || id == 'next' ? ' → Schritt ${options.step}' : ''}');
               },
             )
           : null,
@@ -373,7 +393,8 @@ class _OptionsPage extends StatelessWidget {
             title: const Text('Geometrie'),
             subtitle: Text(
               'bottomInset ${g.bottomInset.toStringAsFixed(1)} · minimiert ${g.minimized} · '
-              'versteckt ${g.hidden} · Tabs aus ${g.tabsHidden} · Accessory ${g.accessoryEnvironment.name} · '
+              'versteckt ${g.hidden} · Toolbar ${g.toolbarRect?.height.round()} · '
+              'unten ${g.bottomToolbarRect?.height.round()} · Tabs aus ${g.tabsHidden} · Accessory ${g.accessoryEnvironment.name} · '
               'vertikal ${g.verticalBarEdge.name} (links ${g.leftInset.toStringAsFixed(0)}, '
               'rechts ${g.rightInset.toStringAsFixed(0)})',
             ),
@@ -396,6 +417,8 @@ class _OptionsPage extends StatelessWidget {
         _switch('Bottom Accessory', options.accessory, (v) => options.accessory = v),
         _switch('Toolbar-Items', options.toolbar, (v) => options.toolbar = v,
             subtitle: 'toolbar: in der vertikalen Bar, iOS 27.1+ (iPhone Duo)'),
+        _switch('Bottom-Items', options.bottomItems, (v) => options.bottomItems = v,
+            subtitle: 'toolbar.bottomGroups: unten in der Spalte'),
         _switch('Events hervorheben', options.prominent, (v) => options.prominent = v,
             subtitle: 'prominentTabIdentifier, iOS 27+'),
         ListTile(

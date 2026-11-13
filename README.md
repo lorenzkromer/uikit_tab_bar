@@ -199,7 +199,40 @@ tabs, `hitRects` holds just the toolbar's buttons (`toolbarRect`), so the
 rest of the column lets touches through, and `compression` has nothing to
 weigh up.
 
-Do not mark every tab `UIKitTab.hidden` to get there. That is now handled
+### Items at the bottom of the column
+
+`UIKitToolbar.bottomGroups` places groups at the bottom of the column, apart
+from `navigation` at the top, e.g. previous / next on a full-screen detail
+page:
+
+```dart
+UIKitTabBar(
+  tabs: tabs,
+  tabsVisibility: UIKitTabsVisibility.hidden,
+  toolbar: UIKitToolbar(
+    navigation: [close],
+    bottomGroups: [
+      [previous, next], // top to bottom as given
+    ],
+    onPressed: ...,
+  ),
+)
+```
+
+These are the items of UIKit's bottom toolbar (`toolbarItems`), which the
+system moves into the column. Measured on iPhone Duo (iOS 27.2):
+
+- They are shown **while the tabs are not shown**. With the tabs visible,
+  the tabs take the bottom of the column and the bottom groups are not
+  shown; `groups` are unaffected.
+- `UIKitTabBarGeometry.bottomToolbarRect` is their frame, `toolbarRect` the
+  frame of the items at the top. Both are in `hitRects`; the column between
+  them lets touches through.
+- As long as the same items stay in the same places, a change of `enabled`,
+  `icon`, `label`, `badge` or `style` updates the button in place instead of
+  rebuilding the column.
+
+Do not mark every tab `UIKitTab.hidden` to hide the tabs. That is now handled
 like `UIKitTabsVisibility.hidden` (UIKit does not recover from an empty set
 of tabs), but `tabsVisibility` says what is meant. A bar that never had a
 visible tab shows no toolbar either.

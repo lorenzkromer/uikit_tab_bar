@@ -1,3 +1,14 @@
+## 0.5.0
+
+* `UIKitToolbar.bottomGroups`: groups at the bottom of the vertical bar,
+  e.g. previous / next on a detail page, apart from `navigation` at the top.
+  UIKit shows them while the tabs are not shown (`tabsVisibility`); with
+  the tabs visible, the tabs take that place.
+* `UIKitTabBarGeometry.bottomToolbarRect`; `toolbarRect` is the frame of the
+  items at the top of the column, so the free middle is not part of either.
+* Toolbar items are updated in place when only `enabled`, `icon`, `label`,
+  `badge`, `style` or `priority` change, instead of rebuilding all buttons.
+
 ## 0.4.0
 
 * `UIKitTabBar.tabsVisibility` (`visible`, `hiddenInVerticalBar`, `hidden`):
